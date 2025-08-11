@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Miwi Control Panel</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    #app {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    /* div {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    } */
+    input, button {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    input {
+      flex-grow: 1;
+      max-width: 200px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    p, pre {
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+      word-wrap: break-word;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>Miwi Control Panel</h1>
+    <div>
+      <input v-model="project" placeholder="Enter project name" />
+      <button @click="setSOS">Set SOS</button>
+      <button @click="setPhoneBook">Set Phone Book</button>
+      <input v-model="callcenter_number" placeholder="Enter Call Center Number" />  
+      <button @click="checkOnline">Check Online</button>
+      <button @click="setBlockPhone">Toggle Block Phone</button>
+      <button @click="setHealth">Set Health</button>
+      <button @click="setCallCenter">Set Call Center</button>
+      <button @click="setAlert">Toggle Alert</button>
+      <button @click="locate">Locate</button>
+      <button @click="powerOn">Power On</button>
+      <button @click="powerOff">Power Off</button>
+    </div>
+    <p v-if="message">{{ message }}</p>
+    <pre v-if="result">{{ result }}</pre>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          project: 'hy202028',
+          callcenter_number: '',
+          message: '',
+          result: '',
+          app_endpoint: 'http://localhost:8000',
+        };
+      },
+      methods: {
+        async setSOS() {
+          const response = await fetch(`${this.app_endpoint}/set_sos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project: this.project }),
+          });
+          const data = await response.json();
+          this.message = data.message;
+          this.result = JSON.stringify(data.data, null, 2);
+        },
+        async setPhoneBook() {
+          const response = await fetch(`${this.app_endpoint}/set_phone_book`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project: this.project }),
+          });
+          const data = await response.json();
+          this.message = data.message;
+          this.result = JSON.stringify(data.data, null, 2);
+        },
+        async checkOnline() {
+          const response = await fetch(`${this.app_endpoint}/check_online`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project: this.project }),
+          });
+          const data = await response.json();
+          this.message = data.message;
+          this.result = JSON.stringify(data.data, null, 2);
+        },
+        async setBlockPhone() {
+          const response = await fetch(`${this.app_endpoint}/set_block_phone`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project: this.project, switch: true }),
+          });
+          const data = await response.json();
+          this.message = data.message;
+          this.result = JSON.stringify(data.data, null, 2);
+        },
+        async setHealth() {
+          const response = await fetch(`${this.app_endpoint}/set_health`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project: this.project }),
+          });
+          const data = await response.json();
+          this.message = data.message;
+          this.result = JSON.stringify(data.data, null, 2);
+        },
+        async setCallCenter() {
+          const response = await fetch(`${this.app_endpoint}/set_callcenter`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project: this.project, callcenter_number: this.callcenter_number }),
+          });
+          const data = await response.json();
+          this.message = data.message;
+          this.result = JSON.stringify(data.data, null, 2);
+        },
+        async setAlert() {
+          const response = await fetch(`${this.app_endpoint}/set_alert`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project: this.project, switch: true }),
+          });
+          const data = await response.json();
+          this.message = data.message;
+          this.result = JSON.stringify(data.data, null, 2);
+        },
+        async locate() {
+          const response = await fetch(`${this.app_endpoint}/locate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project: this.project }),
+          });
+          const data = await response.json();
+          this.message = data.message;
+          this.result = JSON.stringify(data.data, null, 2);
+        },
+        async powerOff() {
+          const response = await fetch(`${this.app_endpoint}/power`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project: this.project, switch: false }),
+          });
+          const data = await response.json();
+          this.message = data.message;
+          this.result = JSON.stringify(data.data, null, 2);
+        },
+        async powerOn() {
+          const response = await fetch(`${this.app_endpoint}/power`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project: this.project, switch: true }),
+          });
+          const data = await response.json();
+          this.message = data.message;
+          this.result = JSON.stringify(data.data, null, 2);
+        },
+      },
+    }).mount('#app');
+  </script>

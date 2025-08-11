@@ -1,0 +1,12 @@
+[
+  {
+    "SedentaryValue": "60",
+    "MainSwitch": "0",
+    "NoonStartTime": "11:30",
+    "NoonEndTime": "14:00",
+    "NoonIsEnable": "0",
+    "NightStartTime": "18:00",
+    "NightEndTime": "07:00",
+    "NightIsEnable": "0"
+  }
+]
