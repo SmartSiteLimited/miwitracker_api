@@ -65,19 +65,19 @@ def get_imeis_by_project(project: str = Form(...), created: str = Form(None)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/set_sos")
-def set_sos(project: str = Form(...) , created: Optional[str] = Form(None), settings: list[str] | None = Form(None)):
+def set_sos(project: str = Form(...) , created: Optional[str] = Form(None), settings: list[str] | None = Form(None) , imeis: list[str] | None = Form(None)):
     try:
         models = WatchItems()
-        result = models.set_sos(project, created, settings)
+        result = models.set_sos(project, created, settings, imeis)
         return ResponsePayload[RT](success=True, message="SOS commands sent successfully", data=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.post("/set_phone_book")
-def set_phone_book(project: str = Form(...) , created: Optional[str] = Form(None), settings: list[str] | None = Form(None)):
+def set_phone_book(project: str = Form(...) , created: Optional[str] = Form(None), settings: list[str] | None = Form(None) , imeis: list[str] | None = Form(None)):
     try:
         models = WatchItems()
-        result = models.set_phonebook(project , created , settings)
+        result = models.set_phonebook(project , created , settings , imeis)
         return ResponsePayload[RT](success=True, message="Phone book commands sent successfully", data=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -87,75 +87,75 @@ def set_phone_book(project: str = Form(...) , created: Optional[str] = Form(None
 @app.post("/check_online")
 
 
-def check_online(project: str = Form(...), created: Optional[str] = Form(None)):
+def check_online(project: str = Form(...), created: Optional[str] = Form(None) , imeis: list[str] | None = Form(None)):
     try:
         models = WatchItems()
-        message = models.check_online_by_api(project , created)
+        message = models.check_online_by_api(project , created , imeis)
         return ResponsePayload[RT](success=True, message="Online status checked successfully", data=message)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.post("/set_block_phone")
-def set_block_phone(project: str = Form(...), switch: str = Form(...), created: Optional[str] = Form(None)):
+def set_block_phone(project: str = Form(...), switch: str = Form(...), created: Optional[str] = Form(None) , imeis: list[str] | None = Form(None)):
     try:
         models = WatchItems()
         if switch == '1':
             flag = True
         elif switch == '0':
             flag = False
-        result = models.set_block_phone(project, flag)
+        result = models.set_block_phone(project, flag , created , imeis)
         return ResponsePayload[RT](success=True, message="Block phone commands sent successfully", data=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post('/set_health')
-def set_health(project: str = Form(...), created: Optional[str] = Form(None)):
+def set_health(project: str = Form(...), created: Optional[str] = Form(None) , imeis: list[str] | None = Form(None)):
     try:
         models = WatchItems()        
-        result = models.set_health(project , created)
+        result = models.set_health(project , created , imeis)
         return ResponsePayload[RT](success=True, message="Health commands sent successfully", data=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.post('/set_callcenter')
-def set_callcenter(project: str = Form(...), created: Optional[str] = Form(None) , settings: list[str] | None = Form(None)):
+def set_callcenter(project: str = Form(...), created: Optional[str] = Form(None) , settings: list[str] | None = Form(None) , imeis: list[str] | None = Form(None)):
     try:
         models = WatchItems()
-        result = models.set_callcenter(project, created, settings)
+        result = models.set_callcenter(project, created, settings, imeis)
         return ResponsePayload[RT](success=True, message="Call center commands sent successfully", data=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.post('/set_alert')
-def set_alert(project: str = Form(...) , switch: bool = True , created: Optional[str] = Form(None)):
+def set_alert(project: str = Form(...) , switch: bool = True , created: Optional[str] = Form(None) , imeis: list[str] | None = Form(None)):
     try:
         models = WatchItems()
-        result = models.set_fallalert(project , switch , created)
+        result = models.set_fallalert(project , switch , created , imeis)
         return ResponsePayload[RT](success=True, message="Alert commands sent successfully", data=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
     
 @app.post('/locate')
-def locate(project: str = Form(...) , created: Optional[str] = Form(None)):
+def locate(project: str = Form(...) , created: Optional[str] = Form(None) , imeis: list[str] | None = Form(None)):
     try:
         models = WatchItems()
-        result = models.set_locate(project, created)
+        result = models.set_locate(project, created, imeis)
         return ResponsePayload[RT](success=True, message="Locate commands sent successfully", data=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post('/power')
-def poweroff(project: str = Form(...) , switch: bool = False , created: Optional[str] = Form(None)):
-    if switch.lower() == '1':
-        reboot = True
-    elif switch.lower() == '0':
-        reboot = False
+def poweroff(project: str = Form(...) , switch: str = Form(...) , created: Optional[str] = Form(None) , imeis: list[str] | None = Form(None)):
+    
     try:
-        
         models = WatchItems()
-        result = models.set_power(project, reboot , created)
+        if switch == '1':
+            flag = True
+        elif switch == '0':
+            flag = False
+        result = models.set_power(project, flag , created , imeis)
         return ResponsePayload[RT](success=True, message="Power off commands sent successfully", data=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

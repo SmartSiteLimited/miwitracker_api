@@ -53,31 +53,37 @@ class WatchItems():
             result = dbo.fetch_all()
             return [item['project'] for item in result]
 
-        def check_online_by_api(self, project_name: str , created: str | None = None) -> bool:
+        def check_online_by_api(self, project_name: str , created: str | None = None , imeis: list[str] | None = None) -> bool:
             results = []
             dbo = db.get_dbo()
-            imei_list = self.get_online_imeis_by_project(project_name, created)
-            if not imei_list:
+            if imeis:
+                imeis_list = [Watch(IMEI_id=imei) for imei in imeis]
+            else:
+                imeis_list = self.get_online_imeis_by_project(project_name, created)
+            if not imeis_list:
                 return []
+            print(f"imeis_list: {imeis_list}")
             online_imeis = miwi.get_devices()
-            for imei in imei_list:
-                if imei.IMEI_id in online_imeis:
-                    results.append(imei)                
-                    #update the status of the watch to online
-                    update_object = {
-                        "IMEI_id": imei.IMEI_id,
-                        'online_status': 1,
-                        'updated': datetime.now().isoformat()
-                    }
-                    dbo.update_object('watches', update_object, "IMEI_id")
-                else :
-                    #update the status of the watch to offline
-                    update_object = {
-                        "IMEI_id": imei.IMEI_id,
-                        'online_status': 0,
-                        'updated': datetime.now().isoformat()
-                    }
-                    dbo.update_object('watches', update_object, "IMEI_id")
+            for watch_object in imeis_list:
+            # Split the IMEI_id string by the comma to get individual IMEIs
+                for imei in watch_object.IMEI_id.split(','):                    
+                    if imei in online_imeis:
+                        results.append(imei)                
+                        #update the status of the watch to online
+                        update_object = {
+                            "IMEI_id": imei,
+                            'online_status': 1,
+                            'updated': datetime.now().isoformat()
+                        }
+                        dbo.update_object('watches', update_object, "IMEI_id")
+                    else :
+                        #update the status of the watch to offline
+                        update_object = {
+                            "IMEI_id": imei,
+                            'online_status': 0,
+                            'updated': datetime.now().isoformat()
+                        }
+                        dbo.update_object('watches', update_object, "IMEI_id")
             return results
 
         def fetch_watches_from_api(self) ->List[Watch]:
@@ -207,33 +213,37 @@ class WatchItems():
             return []  # Adjust return based on actual requirements
 
 
-        def set_block_phone (self, project_name: str, switch: bool = True , created: str | None = None) -> bool:
+        def set_block_phone (self, project_name: str, switch: bool = True , created: str | None = None , imeis: list[str] | None = None) -> bool:
             message = []
             dbo = db.get_dbo()
             try:
-
-                imeis_list = self.get_online_imeis_by_project(project_name, created)
+                if imeis:
+                    imeis_list = [Watch(IMEI_id=imei) for imei in imeis]
+                else:
+                    imeis_list = self.get_online_imeis_by_project(project_name, created)
                 if not imeis_list:
                     return False
-                for imei in imeis_list:
-                    payload = {
-                        "Imei": imei.IMEI_id,
-                        "timestamp": timestamp,
-                        "CommandCode": "9601",
+                for watch_object in imeis_list:
+                    # Split the IMEI_id string by the comma to get individual IMEIs
+                    for imei in watch_object.IMEI_id.split(','):
+                        payload = {
+                            "Imei": imei,
+                            "timestamp": timestamp,
+                            "CommandCode": "9601",
                         "CommandValue": "1" if switch else "0"
                     }
-                    response = miwi.send_command(payload)
-                    if response:
-                        message.append(f"Block phone for {imei.IMEI_id} set to {switch}")
-                        
-                        update_object = {
-                            "IMEI_id": imei.IMEI_id,
-                            "updated": datetime.now().isoformat()
-                        }
-                        dbo.update_object('watches', update_object, "IMEI_id")
-                        
-                    else:   
-                        message.append(f"Failed to set block phone for {imei.IMEI_id}")
+                        response = miwi.send_command(payload)
+                        if response:
+                            message.append(f"Block phone for {imei} set to {switch}")
+
+                            update_object = {
+                                "IMEI_id": imei,
+                                "updated": datetime.now().isoformat()
+                            }
+                            dbo.update_object('watches', update_object, "IMEI_id")
+                            
+                        else:   
+                            message.append(f"Failed to set block phone for {imei}")
 
                 return message
             except Exception as e:
@@ -241,62 +251,71 @@ class WatchItems():
                 return False
             
             
-        def set_health (self , project : str, created: str | None = None):
+        def set_health (self , project : str, created: str | None = None , imeis: list[str] | None = None):
             message = []
             dbo = db.get_dbo()
             try:
-                imeis = self.get_online_imeis_by_project(project, created)
-                if not imeis:
+                if imeis:
+                    imeis_list = [Watch(IMEI_id=imei) for imei in imeis]
+                else:
+                    imeis_list = self.get_online_imeis_by_project(project, created)
+                if not imeis_list:
                     return False
-                for imei in imeis:
-                    payload = {
-                        "Imei": imei.IMEI_id,
-                        "timestamp": timestamp,
-                        "CommandCode": "2815",
-                        "CommandValue": '[{"TimeInterval":"300","Switch":"1"}]'
-                    }
-                    response = miwi.send_command(payload)
-                    if response:
-                        message.append(f"Health for {imei.IMEI_id} set")
-                        update_object = {
-                            "IMEI_id": imei.IMEI_id,
-                            "updated": datetime.now().isoformat()
+                for watch_object in imeis_list:
+                # Split the IMEI_id string by the comma to get individual IMEIs
+                    for imei in watch_object.IMEI_id.split(','):
+                        payload = {
+                            "Imei": imei,
+                            "timestamp": timestamp,
+                            "CommandCode": "2815",
+                            "CommandValue": '[{"TimeInterval":"300","Switch":"1"}]'
                         }
-                        dbo.update_object('watches', update_object, "IMEI_id")
-                    else:
-                        message.append(f"Failed to set health for {imei.IMEI_id}")
+                        response = miwi.send_command(payload)
+                        if response:
+                            message.append(f"Health for {imei} set")
+                            update_object = {
+                                "IMEI_id": imei,
+                                "updated": datetime.now().isoformat()
+                            }
+                            dbo.update_object('watches', update_object, "IMEI_id")
+                        else:
+                            message.append(f"Failed to set health for {imei}")
 
                 return message
             except Exception as e:
                 print(f"Error setting health: {e}")
                 return False
 
-        def set_callcenter (self, project: str , created : str | None = None , settings: list[str] | None = None):
+        def set_callcenter (self, project: str , created : str | None = None , settings: list[str] | None = None , imeis: list[str] | None = None):
 
             message = []
             dbo = db.get_dbo()
-            
-            imeis_list = self.get_online_imeis_by_project(project , created)
+
+            if imeis:
+                imeis_list = [Watch(IMEI_id=imei) for imei in imeis]
+            else:
+                imeis_list = self.get_online_imeis_by_project(project , created)
             if not imeis_list:
                 return False
-
-            for imei in imeis_list:
-                if settings:
-                    for entry in settings:
-                        if not isinstance(entry, str):
-                            continue
+            for watch_object in imeis_list:
+                    # Split the IMEI_id string by the comma to get individual IMEIs
+                for imei in watch_object.IMEI_id.split(','):
+                    if settings:
+                        for entry in settings:
+                            if not isinstance(entry, str):
+                                continue
                         payload = {
-                            "Imei": imei.IMEI_id,
+                            "Imei": imei,
                             "timestamp": timestamp,
                             "CommandCode": "0009",
                             "CommandValue": entry
                         }
                         response = miwi.send_command(payload)
                         if response:
-                            message.append(f"Call center for {imei.IMEI_id} set to {entry}")
+                            message.append(f"Call center for {imei} set to {entry}")
                             update_object = {
-                            "IMEI_id": imei.IMEI_id,
-                            "updated": datetime.now().isoformat()
+                                "IMEI_id": imei,
+                                "updated": datetime.now().isoformat()
                             }
                             dbo.update_object('watches', update_object, "IMEI_id")
 
@@ -306,178 +325,207 @@ class WatchItems():
 
             return message
 
-        def set_sos(self, project: str , created : str  | None = None , settings: List[str] | None = None):
+        def set_sos(self, project: str , created : str  | None = None , settings: List[str] | None = None , imeis: list[str] | None = None):
 
-            imeis_list = self.get_online_imeis_by_project(project , created)
+            if imeis:
+                imeis_list = [Watch(IMEI_id=imei) for imei in imeis]
+            else:
+                imeis_list = self.get_online_imeis_by_project(project , created)
             message = []
             dbo = db.get_dbo()
             if not imeis_list:
                 return False
-            for imei in imeis_list:
-                if not settings:
-                    message.append(f"No call center number found for {imei.IMEI_id}")
-                    continue
-                
-                for entry in settings:
-                    payload = {
-                        "Imei": imei.IMEI_id,
-                        "timestamp": timestamp,
-                        "CommandCode": "0001",
-                        "CommandValue": entry
-                    }
-                    response = miwi.send_command(payload)
-                    if response:
-                        message.append(f"SOS for {imei.IMEI_id} set to number {entry}")
-                        update_object = {
-                            "IMEI_id": imei.IMEI_id,
-                            'updated': datetime.now().isoformat()
+            for watch_object in imeis_list:
+                    # Split the IMEI_id string by the comma to get individual IMEIs
+                for imei in watch_object.IMEI_id.split(','):
+                    if not settings:
+                        message.append(f"No call center number found for {imei}")
+                        continue
+
+                    for entry in settings:
+                        payload = {
+                            "Imei": imei,
+                            "timestamp": timestamp,
+                            "CommandCode": "0001",
+                            "CommandValue": entry
                         }
-                        dbo.update_object('watches', update_object, "IMEI_id")
-                    else:
-                        message.append(f"Failed to set SOS for {imei.IMEI_id}")
+                        response = miwi.send_command(payload)
+                        if response:
+                            message.append(f"SOS for {imei} set to number {entry}")
+                            update_object = {
+                                "IMEI_id": imei,
+                                'updated': datetime.now().isoformat()
+                            }
+                            dbo.update_object('watches', update_object, "IMEI_id")
+                        else:
+                            message.append(f"Failed to set SOS for {imei}")
 
             return message
 
-        def set_phonebook(self, project: str , created : str  | None = None , settings: list[str] | None = None):
+        def set_phonebook(self, project: str , created : str  | None = None , settings: list[str] | None = None , imeis: list[str] | None = None):
 
-            imeis_list = self.get_online_imeis_by_project(project , created)
+            if imeis:
+                imeis_list = [Watch(IMEI_id=imei) for imei in imeis]
+            else:
+                imeis_list = self.get_online_imeis_by_project(project , created)
             if not imeis_list:
                 return False
             
             message = []
             dbo = db.get_dbo()
             try:
-                for imei in imeis_list:
-                    if not settings:
-                        message.append(f"No phone numbers found for {imei.IMEI_id}")
-                        continue
-                    
-                        #convert the entry to a json format settings 
-                    phone_book_setting = []
-                    for entry in settings:
-                        new_entry = {
-                            "Name": "SOS",
-                            "Phone": entry
+                for watch_object in imeis_list:
+                    # Split the IMEI_id string by the comma to get individual IMEIs
+                    for imei in watch_object.IMEI_id.split(','):
+                        if not settings:
+                            message.append(f"No phone numbers found for {imei}")
+                            continue
+                        #convert the entry to a json format settings
+                        phone_book_setting = []
+                        for entry in settings:
+                            new_entry = {
+                                "Name": "SOS",
+                                "Phone": entry
+                            }
+                            phone_book_setting.append(new_entry)
+                        settings_payload = json.dumps(phone_book_setting) 
+                        payload = {
+                            "Imei": imei,
+                            "timestamp": timestamp,
+                            "CommandCode": "1106",
+                            "CommandValue": settings_payload
                         }
-                        phone_book_setting.append(new_entry)
-                    settings_payload = json.dumps(phone_book_setting) 
-                    payload = {
-                        "Imei": imei.IMEI_id,
-                        "timestamp": timestamp,
-                        "CommandCode": "1106",
-                        "CommandValue": settings_payload
-                    }
-                    response = miwi.send_command(payload)
-                    if response:
-                        message.append(f"Phonebook for {imei.IMEI_id} set")
-                        update_object = {
-                            "IMEI_id": imei.IMEI_id,
-                            'updated': datetime.now().isoformat()
-                        }
-                        dbo.update_object('watches', update_object, "IMEI_id")
+                        response = miwi.send_command(payload)
+                        if response:
+                            message.append(f"Phonebook for {imei} set")
+                            update_object = {
+                                "IMEI_id": imei,
+                                'updated': datetime.now().isoformat()
+                            }
+                            dbo.update_object('watches', update_object, "IMEI_id")
 
             except Exception as e:
                 print(f"Error setting phonebook: {e}")
 
             return message  
 
-        def set_fallalert(self, project: str , switch: bool = True , created : str  | None = None):
-            imeis_list = self.get_online_imeis_by_project(project, created)
+        def set_fallalert(self, project: str , switch: bool = True , created : str  | None = None , imeis: list[str] | None = None):
+
+            if imeis:
+                imeis_list = [Watch(IMEI_id=imei) for imei in imeis]
+            else:
+                imeis_list = self.get_online_imeis_by_project(project, created)
+            if not imeis_list:
+                return False
             message = []
             dbo = db.get_dbo()
             print(f"switch: {switch}")
             try:
-                for imei in imeis_list:
-                    if switch:
-                        response = alert.turn_on(imei.IMEI_id, 8)
-                        update_object = {
-                            "IMEI_id": imei.IMEI_id,
-                            "updated": datetime.now().isoformat()   
-                        }
+                for watch_object in imeis_list:
+                    # Split the IMEI_id string by the comma to get individual IMEIs
+                    for imei in watch_object.IMEI_id.split(','):
+                        if switch:
+                            response = alert.turn_on(imei, 8)
+                            update_object = {
+                                "IMEI_id": imei,
+                                "updated": datetime.now().isoformat()
+                            }
+                        
                         dbo.update_object('watches', update_object, "IMEI_id")
                     else:
-                        response = alert.turn_off(imei.IMEI_id)
+                        response = alert.turn_off(imei)
                         update_object = {
-                            "IMEI_id": imei.IMEI_id,
+                            "IMEI_id": imei,
                             "updated": datetime.now().isoformat()
                         }
                         dbo.update_object('watches', update_object, "IMEI_id")
                     if response:
-                        message.append(f"Fall alert for {imei.IMEI_id} set to {switch}")
-                        
-                        
+                        message.append(f"Fall alert for {imei} set to {switch}")
+
                     else:
-                        message.append(f"Failed to set fall alert for {imei.IMEI_id}")
+                        message.append(f"Failed to set fall alert for {imei}")
 
             except Exception as e:
                 print(f"Error setting fall alert: {e}")
 
             return message
 
-        def set_power(self , project , reboot :bool = True , created : str | None = None):
-            imeis_list = self.get_online_imeis_by_project(project , created)
+        def set_power(self , project , reboot :bool = True , created : str | None = None , imeis: list[str] | None = None):
+            if imeis: 
+                imeis_list = [Watch(IMEI_id=imei) for imei in imeis]
+            else:
+                imeis_list = self.get_online_imeis_by_project(project , created)
             message = []
             dbo = db.get_dbo()
             try:
-                for imei in imeis_list:
-                    if reboot:
-                        response = miwi.send_command({
-                            "Imei": imei.IMEI_id,
-                            "timestamp": timestamp,
-                            "CommandCode": "0010",
-                            "CommandValue": ""
-                        })
-                        if response:
-                            message.append(f"Power command for {imei.IMEI_id} set to reboot")
-                            update_object = {
-                                "IMEI_id": imei.IMEI_id,
-                                "online_status": 1,
-                                'updated': datetime.now().isoformat()
-                            }
-                            dbo.update_object('watches', update_object, "IMEI_id")
-                    else:
-                        response = miwi.send_command({
-                            "Imei": imei.IMEI_id,
-                            "timestamp": timestamp,
-                            "CommandCode": "0048",
-                            "CommandValue": ""
-                        })
-                        if response:
-                            message.append(f"Power command for {imei.IMEI_id} set to off")
-                            update_object = {
-                                "IMEI_id": imei.IMEI_id,
-                                "online_status": 0,
-                                'updated': datetime.now().isoformat()
-                            }
-                            dbo.update_object('watches', update_object, "IMEI_id")
+                for watch_object in imeis_list:
+                    # Split the IMEI_id string by the comma to get individual IMEIs
+                    for imei in watch_object.IMEI_id.split(','):
+                        if reboot:
+                            response = miwi.send_command({
+                                "Imei": imei,
+                                "timestamp": timestamp,
+                                "CommandCode": "0010",
+                                "CommandValue": ""
+                            })
+                            if response:
+                                message.append(f"Power command for {imei} set to reboot")
+                                update_object = {
+                                    "IMEI_id": imei,
+                                    "online_status": 1,
+                                    'updated': datetime.now().isoformat()
+                                }
+                                dbo.update_object('watches', update_object, "IMEI_id")
+                        else:
+                            response = miwi.send_command({
+                                "Imei": imei,
+                                "timestamp": timestamp,
+                                "CommandCode": "0048",
+                                "CommandValue": ""
+                            })
+                            if response:
+                                message.append(f"Power command for {imei} set to off")
+                                update_object = {
+                                    "IMEI_id": imei,
+                                    "online_status": 0,
+                                    'updated': datetime.now().isoformat()
+                                }
+                                dbo.update_object('watches', update_object, "IMEI_id")
 
             except Exception as e:
                 print(f"Error setting power command: {e}")
 
             return message
         
-        def set_locate(self , project , created: str | None = None):
+        def set_locate(self , project , created: str | None = None , imeis: list[str] | None = None):
             if not project:
                 return False
-            imeis_list = self.get_online_imeis_by_project(project , created)
+            if imeis:
+                imeis_list = [Watch(IMEI_id=imei) for imei in imeis]
+            else:
+                imeis_list = self.get_online_imeis_by_project(project , created)
+            if not imeis_list:
+                return False
             message = []
             dbo = db.get_dbo()
             try:
-                for imei in imeis_list:
-                    response = miwi.send_command({
-                        "Imei": imei.IMEI_id,
-                        "CommandCode": "0039",
-                        "CommandValue": ""
-                    })
-                    if response:
-                        message.append(f"Locate command for {imei.IMEI_id} sent")
-                        update_object = {
-                            "IMEI_id": imei.IMEI_id,
-                            'updated': datetime.now().isoformat()
-                        }
+                for watch_object in imeis_list:
+                    # Split the IMEI_id string by the comma to get individual IMEIs
+                    for imei in watch_object.IMEI_id.split(','):
+                        response = miwi.send_command({
+                            "Imei": imei,
+                            "CommandCode": "0039",
+                            "CommandValue": ""
+                        })
+                        if response:
+                            message.append(f"Locate command for {imei} sent")
+                            update_object = {
+                                "IMEI_id": imei,
+                                'updated': datetime.now().isoformat()
+                            }
                         dbo.update_object('watches', update_object, "IMEI_id")
                     else:
-                        message.append(f"Failed to send locate command for {imei.IMEI_id}")
+                        message.append(f"Failed to send locate command for {imei}")
 
             except Exception as e:
                 print(f"Error setting locate command: {e}")
