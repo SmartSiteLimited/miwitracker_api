@@ -62,7 +62,6 @@ class WatchItems():
                 imeis_list = self.get_online_imeis_by_project(project_name, created)
             if not imeis_list:
                 return []
-            print(f"imeis_list: {imeis_list}")
             online_imeis = miwi.get_devices()
             for watch_object in imeis_list:
             # Split the IMEI_id string by the comma to get individual IMEIs
@@ -419,7 +418,6 @@ class WatchItems():
                 return False
             message = []
             dbo = db.get_dbo()
-            print(f"switch: {switch}")
             try:
                 for watch_object in imeis_list:
                     # Split the IMEI_id string by the comma to get individual IMEIs
@@ -431,19 +429,19 @@ class WatchItems():
                                 "updated": datetime.now().isoformat()
                             }
                         
-                        dbo.update_object('watches', update_object, "IMEI_id")
-                    else:
-                        response = alert.turn_off(imei)
-                        update_object = {
+                            dbo.update_object('watches', update_object, "IMEI_id")
+                        else:
+                            response = alert.turn_off(imei)
+                            update_object = {
                             "IMEI_id": imei,
                             "updated": datetime.now().isoformat()
-                        }
-                        dbo.update_object('watches', update_object, "IMEI_id")
-                    if response:
-                        message.append(f"Fall alert for {imei} set to {switch}")
+                         }
+                            dbo.update_object('watches', update_object, "IMEI_id")
+                        if response:
+                            message.append(f"Fall alert for {imei} set to {switch}")
 
-                    else:
-                        message.append(f"Failed to set fall alert for {imei}")
+                        else:
+                            message.append(f"Failed to set fall alert for {imei}")
 
             except Exception as e:
                 print(f"Error setting fall alert: {e}")

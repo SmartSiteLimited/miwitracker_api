@@ -136,7 +136,6 @@ def send_command(payload: dict, timeout=15):
         if response["Code"] == 0:
             return True
         else:
-            print(f"Error from API: {response.get('Message', 'Unknown error')}")
             return False
     except Exception as e:
         print(f"Error setting block phone: {e}")
