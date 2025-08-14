@@ -382,12 +382,15 @@ class WatchItems():
                         #convert the entry to a json format settings
                         phone_book_setting = []
                         for entry in settings:
-                            new_entry = {
-                                "Name": "SOS",
-                                "Phone": entry
-                            }
-                            phone_book_setting.append(new_entry)
+                            entry_number_list = entry.split(',')
+                            for entry in entry_number_list:
+                                new_entry = {
+                                    "Name": "SOS",
+                                    "Number": entry
+                                }
+                                phone_book_setting.append(new_entry)
                         settings_payload = json.dumps(phone_book_setting) 
+                        print(f"Settings payload for {imei}: {settings_payload}")
                         payload = {
                             "Imei": imei,
                             "timestamp": timestamp,
