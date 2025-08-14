@@ -390,7 +390,6 @@ class WatchItems():
                                 }
                                 phone_book_setting.append(new_entry)
                         settings_payload = json.dumps(phone_book_setting) 
-                        print(f"Settings payload for {imei}: {settings_payload}")
                         payload = {
                             "Imei": imei,
                             "timestamp": timestamp,
