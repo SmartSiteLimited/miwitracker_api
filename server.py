@@ -8,7 +8,11 @@ import uvicorn
 from app.models.watch import WatchItems
 from app.models.settings import Settings
 import miwi 
+import sys
 from fastapi.middleware.cors import CORSMiddleware
+import argparse
+
+
 RT = TypeVar("RT")
 
 class ResponsePayload(BaseModel, Generic[RT]):
@@ -183,4 +187,11 @@ def get_setting_by_project(project: str = Form(...)):
 
     
 if __name__ == '__main__':
-    uvicorn.run(app, host='localhost', port=8000)
+    parser = argparse.ArgumentParser(description="Run the FastAPI server")
+    parser.add_argument("--host", type=str, default="localhost", help="Host to run the server on")
+    parser.add_argument("--port", type=int, default=8000, help="Port to run the server on")
+    parser.add_argument("--reload", action="store_true", help="Enable auto-reload", default=False)
+    # Disable bytecode generation as default 
+    args = parser.parse_args()
+    
+    uvicorn.run(app, host=args.host, port=args.port, reload=args.reload)
