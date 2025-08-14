@@ -114,13 +114,8 @@ class WatchItems():
                             print(f"Failed to fetch data for project {project}. Status code: {response.status_code}")
                             continue
 
-                        # Log the response for debugging
-                        print(f"API response for {project}: {response_text}")
-
                         # Check if datas is iterable (list or dict) or handle other cases
                         if isinstance(datas, dict):
-                            # Handle dictionary response (like hy202204)
-                            print('running dict')
                             for imei_id in datas.keys():
                                 # Ensure imei_id is a string for consistency
                                 imei_id_str = str(imei_id)
@@ -149,8 +144,6 @@ class WatchItems():
                                     }
                                     dbo.update_object('watches', update_object, "id")
                         elif isinstance(datas, list):
-                            # Handle list response
-                            print('running list')
                             for item in datas:
                                 if isinstance(item, dict):
                                     for imei_id in item.keys():
@@ -531,8 +524,44 @@ class WatchItems():
                 print(f"Error setting locate command: {e}")
 
             return message
-
-    
-
             
+        def add_watch_list(self, imeis: list[str], project: str) -> bool:
+            dbo = db.get_dbo()
+            message = []
+            if imeis:
+                imeis_list = [Watch(IMEI_id=imei) for imei in imeis]
+            count = 0
+            try:
+                for watch_object in imeis_list:
+                    for item in watch_object.IMEI_id.split(','):
+                        #remove any special characters from item and convert into number
+                        item = ''.join(filter(str.isdigit, item))
+                        item = int(item) if item.isdigit() else item
+                        query = Query()
+                        query.Select('id').From('watches').Where(f'IMEI_id = {dbo.q(item)}')
+                        dbo.execute(str(query))
+                        result = dbo.fetch_one()
+                        if not result:
+                            inserted_object = {
+                                'IMEI_id': item,
+                                'project': project,
+                                'created': datetime.now().isoformat(),
+                                'updated': None
+                            }
+                            dbo.insert_object('watches', inserted_object)
+                            count += 1
+                        else:
+                            id = result['id']
+                            update_object = {
+                                "id": id,
+                                'updated': datetime.now().isoformat()
+                            }
+                            dbo.update_object('watches', update_object, "id")
+                total_added = count
+                message.append(f"Total watches added: {total_added}")
+
+            except Exception as e:
+                print(f"Error adding watch list: {e}")
+                return False
             
+            return message if message else True  # Return the message or True if no message was generated

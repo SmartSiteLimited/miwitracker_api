@@ -34,6 +34,16 @@ app.add_middleware(
 )
 
 @app.post('/fetch_watches')
+
+@app.post('/add_list')
+def add_list(imeis: list[str] = Form(...) , project: str = Form(...) ):
+    try:
+        models = WatchItems()
+        result = models.add_watch_list(imeis, project)
+        return ResponsePayload[RT](success=True, message="Watch list added successfully", data=result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 def fetch_watches():
     try:
         models = WatchItems()
