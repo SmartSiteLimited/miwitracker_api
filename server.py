@@ -37,7 +37,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post('/fetch_watches')
+
 
 @app.post('/add_list')
 def add_list(imeis: list[str] = Form(...) , project: str = Form(...) ):
@@ -47,7 +47,8 @@ def add_list(imeis: list[str] = Form(...) , project: str = Form(...) ):
         return ResponsePayload[RT](success=True, message="Watch list added successfully", data=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
+    
+@app.post('/fetch_watches')
 def fetch_watches():
     try:
         models = WatchItems()
@@ -104,6 +105,7 @@ def set_phone_book(project: str = Form(...) , created: Optional[str] = Form(None
 def check_online(project: str = Form(...), created: Optional[str] = Form(None) , imeis: list[str] | None = Form(None)):
     try:
         models = WatchItems()
+        print(imeis)
         message = models.check_online_by_api(project , created , imeis)
         return ResponsePayload[RT](success=True, message="Online status checked successfully", data=message)
     except Exception as e:

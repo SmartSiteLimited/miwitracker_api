@@ -56,7 +56,7 @@ class WatchItems():
         def check_online_by_api(self, project_name: str , created: str | None = None , imeis: list[str] | None = None) -> bool:
             results = []
             dbo = db.get_dbo()
-            if imeis:
+            if imeis and len(imeis) > 0:
                 imeis_list = [Watch(IMEI_id=imei) for imei in imeis]
             else:
                 imeis_list = self.get_online_imeis_by_project(project_name, created)
@@ -313,7 +313,7 @@ class WatchItems():
 
                             
                         else:
-                            message.append(f"Failed to set call center for {entry.get('Imei')}")
+                            message.append(f"Failed to set call center for {imei}")
 
             return message
 
@@ -516,7 +516,7 @@ class WatchItems():
                                 "IMEI_id": imei,
                                 'updated': datetime.now().isoformat()
                             }
-                        dbo.update_object('watches', update_object, "IMEI_id")
+                            dbo.update_object('watches', update_object, "IMEI_id")
                     else:
                         message.append(f"Failed to send locate command for {imei}")
 
