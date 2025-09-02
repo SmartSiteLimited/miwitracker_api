@@ -1,16 +1,17 @@
 from pydantic import BaseModel, ConfigDict
-import json 
-from app.schema.base import IdRecord , DbModel
+import json
+from app.schema.base import IdRecord, DbModel
+
 
 class SettingFieldValue(DbModel):
     model_config = ConfigDict(coerce_numbers_to_str=True)
 
     project_id: int | None = None
-    field : str
-    value : str | None = None    
+    field: str
+    value: str | None = None
+
 
 class SettingFieldValues(DbModel):
-
     @classmethod
     def parse_form_values(cls, form_values: list[SettingFieldValue]):
         # to dict

@@ -10,9 +10,10 @@ from app.core.query import Query
 
 CONNECTION_POOLS = {}
 
+
 class Database:
-    def __init__(self, config: dict):
-        self.config = config
+    def __init__(self):
+        self.config = get_config("database", {})
         self.conn: mariadb.Connection | None = None
         self.csr: mariadb.cursors.Cursor | None = None
 
@@ -22,14 +23,14 @@ class Database:
         self.query = None
 
     def connect(self):
-        dbhost = self.config.get('host', 'localhost')
-        dbport = int(self.config.get('port', 3306))
-        dbname = self.config.get('database', '')
-        dbuser = self.config.get('username', '')
-        dbpass = self.config.get('password', '')
+        dbhost = self.config.get("host", "localhost")
+        dbport = int(self.config.get("port", 3306))
+        dbname = self.config.get("database", "")
+        dbuser = self.config.get("username", "")
+        dbpass = self.config.get("password", "")
 
         pool_name = f"pool_{dbname}"
-        pool_size = self.config.get('pool_size', 10)
+        pool_size = self.config.get("pool_size", 10)
 
         if pool_name not in CONNECTION_POOLS:
             CONNECTION_POOLS[pool_name] = mariadb.ConnectionPool(
@@ -41,7 +42,7 @@ class Database:
                 autocommit=False,
                 pool_name=pool_name,
                 pool_size=pool_size,
-                pool_validation_interval=300
+                pool_validation_interval=300,
             )
 
         pool = CONNECTION_POOLS[pool_name]
@@ -50,13 +51,7 @@ class Database:
             conn = pool.get_connection()
         except:
             # no connection in pool available
-            conn = mariadb.connect(
-                host=dbhost,
-                database=dbname,
-                user=dbuser,
-                password=dbpass,
-                autocommit=False
-            )
+            conn = mariadb.connect(host=dbhost, database=dbname, user=dbuser, password=dbpass, autocommit=False)
 
         # conn.character_set = 'utf8mb4'
 
@@ -91,7 +86,7 @@ class Database:
 
         result = {}
         for field in fields:
-            result[field['Field']] = re.sub(r'[(0-9)]', '', field['Type'])
+            result[field["Field"]] = re.sub(r"[(0-9)]", "", field["Type"])
 
         return result
 
@@ -140,13 +135,13 @@ class Database:
                 v = json.dumps(v, default=str)
 
             if isinstance(v, datetime):
-                v = v.strftime('%Y-%m-%d %H:%M:%S')
+                v = v.strftime("%Y-%m-%d %H:%M:%S")
 
             if isinstance(v, date):
-                v = v.strftime('%Y-%m-%d')
+                v = v.strftime("%Y-%m-%d")
 
             # is Enum
-            if hasattr(v, 'value'):
+            if hasattr(v, "value"):
                 v = v.value
 
             if isinstance(v, bool):
@@ -167,7 +162,7 @@ class Database:
         try:
             self.csr.execute(insert_sql)
         except mariadb.DatabaseError as err:
-            self.logger.error('%s: %s' % (table, str(err)))
+            self.logger.error("%s: %s" % (table, str(err)))
             self.conn.rollback()
             raise err
         else:
@@ -195,13 +190,13 @@ class Database:
                 v = json.dumps(v, default=str)
 
             if isinstance(v, datetime):
-                v = v.strftime('%Y-%m-%d %H:%M:%S')
+                v = v.strftime("%Y-%m-%d %H:%M:%S")
 
             if isinstance(v, date):
-                v = v.strftime('%Y-%m-%d')
+                v = v.strftime("%Y-%m-%d")
 
             # is Enum
-            if hasattr(v, 'value'):
+            if hasattr(v, "value"):
                 v = v.value
 
             if isinstance(v, bool):
@@ -225,12 +220,12 @@ class Database:
         if not fields:
             return True
 
-        sql = statement % (table, ', '.join(fields), ' AND '.join(wheres))
+        sql = statement % (table, ", ".join(fields), " AND ".join(wheres))
 
         try:
             self.csr.execute(sql)
         except mariadb.DatabaseError as err:
-            self.logger.error('%s: %s' % (table, str(err)))
+            self.logger.error("%s: %s" % (table, str(err)))
             self.conn.rollback()
             raise err
         else:
@@ -244,7 +239,7 @@ class Database:
         if isinstance(content, (int, float)):
             content = str(content)
 
-        return '\'' + self.csr._connection.escape_string(content) + '\''
+        return "'" + self.csr._connection.escape_string(content) + "'"
 
     def close(self):
         try:
@@ -260,4 +255,4 @@ class Database:
 
 
 def get_dbo() -> Database:
-    return Database(get_config('database'))
+    return Database()

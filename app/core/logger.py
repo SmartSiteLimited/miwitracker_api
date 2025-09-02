@@ -18,7 +18,7 @@ def create_logger(name="app", log_level=logging.INFO) -> logging.Logger:
 
         logging.basicConfig(level=log_level)
         logfile = ROOT_PATH / "logs" / f"{name}.log"
-        fh = logging.FileHandler(logfile, encoding='utf-8')
+        fh = logging.FileHandler(logfile, encoding="utf-8")
 
         fh.setLevel(log_level)
         logger.setLevel(log_level)

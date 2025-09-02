@@ -4,9 +4,9 @@ from typing import Union
 
 CONFIG = {}
 ROOT_PATH = Path(__file__).parent.parent.resolve()
-LOG_PATH = ROOT_PATH / 'logs'
-APP_PATH = ROOT_PATH / 'app'
-PUBLIC_PATH = ROOT_PATH / 'public'
+LOG_PATH = ROOT_PATH / "logs"
+APP_PATH = ROOT_PATH / "app"
+PUBLIC_PATH = ROOT_PATH / "public"
 
 
 def get_config(path: str, default=None) -> Union[str, dict, list, int, float, bool, None]:
@@ -30,7 +30,7 @@ def load_config():
 
     if not CONFIG:
         parser = configparser.ConfigParser()
-        parser.read(ROOT_PATH / 'config.ini')
+        parser.read(ROOT_PATH / "config.ini")
 
         for section in parser.sections():
             CONFIG[section] = {}

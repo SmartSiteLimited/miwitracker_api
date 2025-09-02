@@ -1,199 +1,55 @@
-from datetime import datetime
-import os
-from fastapi import FastAPI, Form, HTTPException
-from typing import Generic, TypeVar , Optional
-from fastapi.datastructures import FormData
-from pydantic import BaseModel
-import uvicorn
-from app.models.watch import WatchItems
-from app.models.settings import Settings
-import miwi 
-import sys
-from fastapi.middleware.cors import CORSMiddleware
 import argparse
+import asyncio
+import platform
 
+import uvicorn
 
-RT = TypeVar("RT")
+from app.config import get_config, ROOT_PATH
 
-class ResponsePayload(BaseModel, Generic[RT]):
-    success: bool
-    data: RT | None = None
-    message: str | None = None
+port = int(get_config("server.port", 5000))
+host = get_config("server.host", "0.0.0.0")
+ssl_on = int(get_config("server.ssl_on", 0)) == 1
+ssl_certfile = get_config("server.ssl_certfile", 0)
+ssl_keyfile = get_config("server.ssl_keyfile", 0)
 
-from configparser import ConfigParser
-config = ConfigParser()
-config.read("config.ini")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--host", type=str, default=host)
+    parser.add_argument("--port", type=int, default=port)
+    parser.add_argument("--debug", action="store_true")
+    args, other_args = parser.parse_known_args()
 
-app = FastAPI(
-    title="miwi API",
-    version="1.2.0",
-)
+    server_args = {
+        "host": args.host,
+        "port": args.port,
+        "timeout_graceful_shutdown": 3,
+        "reload": args.debug,
+    }
+    if ssl_on:
+        server_args["ssl_keyfile"] = ssl_keyfile
+        server_args["ssl_certfile"] = ssl_certfile
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    # merge with other_args
+    for index, arg in enumerate(other_args):
+        if arg == "--debug":
+            continue
 
+        if arg.startswith("--"):
+            key = arg[2:].replace("-", "_")
+            value = True
+            server_args[key] = value
+        else:
+            # previous arg is key
+            if index > 0 and other_args[index - 1].startswith("--"):
+                key = other_args[index - 1][2:].replace("-", "_")
+                server_args[key] = arg
 
+    # if "log_config" not in server_args:
+    #     server_args["log_config"] = str(
+    #         ROOT_PATH / "logging.prod.conf" if not args.debug else ROOT_PATH / "logging.dev.conf"
+    #     )
 
-@app.post('/add_list')
-def add_list(imeis: list[str] = Form(...) , project: str = Form(...) ):
-    try:
-        models = WatchItems()
-        result = models.add_watch_list(imeis, project)
-        return ResponsePayload[RT](success=True, message="Watch list added successfully", data=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.post('/fetch_watches')
-def fetch_watches():
-    try:
-        models = WatchItems()
-        result = models.fetch_watches_from_api()
-        return ResponsePayload[RT](success=True, message="Watches fetched successfully", data=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.get('/get_projects')
-def get_projects():
-    try:
-        models = WatchItems()
-        result = models.get_project_list()
-        if not result:
-            return ResponsePayload[RT](success=False, message="No projects found", data=[])
-        return ResponsePayload[RT](success=True, message="Projects fetched successfully", data=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    if platform.system() == "Windows":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-@app.post('/get_imeis_by_project')
-def get_imeis_by_project(project: str = Form(...), created: str = Form(None)):
-    try:
-        models = WatchItems()
-        result = models.get_watches_by_project(project, created)
-        if not result:
-            return ResponsePayload[RT](success=False, message="No watches found for this project", data=[])
-        return ResponsePayload[RT](success=True, message="Watches fetched successfully", data=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/set_sos")
-def set_sos(project: str = Form(...) , created: Optional[str] = Form(None), settings: list[str] | None = Form(None) , imeis: list[str] | None = Form(None)):
-    try:
-        models = WatchItems()
-        result = models.set_sos(project, created, settings, imeis)
-        return ResponsePayload[RT](success=True, message="SOS commands sent successfully", data=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.post("/set_phone_book")
-def set_phone_book(project: str = Form(...) , created: Optional[str] = Form(None), settings: list[str] | None = Form(None) , imeis: list[str] | None = Form(None)):
-    try:
-        models = WatchItems()
-        result = models.set_phonebook(project , created , settings , imeis)
-        return ResponsePayload[RT](success=True, message="Phone book commands sent successfully", data=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-
-
-@app.post("/check_online")
-
-
-def check_online(project: str = Form(...), created: Optional[str] = Form(None) , imeis: list[str] | None = Form(None)):
-    try:
-        models = WatchItems()
-        print(imeis)
-        message = models.check_online_by_api(project , created , imeis)
-        return ResponsePayload[RT](success=True, message="Online status checked successfully", data=message)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.post("/set_block_phone")
-def set_block_phone(project: str = Form(...), switch: str = Form(...), created: Optional[str] = Form(None) , imeis: list[str] | None = Form(None)):
-    try:
-        models = WatchItems()
-        if switch == '1':
-            flag = True
-        elif switch == '0':
-            flag = False
-        result = models.set_block_phone(project, flag , created , imeis)
-        return ResponsePayload[RT](success=True, message="Block phone commands sent successfully", data=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post('/set_health')
-def set_health(project: str = Form(...), created: Optional[str] = Form(None) , imeis: list[str] | None = Form(None)):
-    try:
-        models = WatchItems()        
-        result = models.set_health(project , created , imeis)
-        return ResponsePayload[RT](success=True, message="Health commands sent successfully", data=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.post('/set_callcenter')
-def set_callcenter(project: str = Form(...), created: Optional[str] = Form(None) , settings: list[str] | None = Form(None) , imeis: list[str] | None = Form(None)):
-    try:
-        models = WatchItems()
-        result = models.set_callcenter(project, created, settings, imeis)
-        return ResponsePayload[RT](success=True, message="Call center commands sent successfully", data=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.post('/set_alert')
-def set_alert(project: str = Form(...) , switch: bool = True , created: Optional[str] = Form(None) , imeis: list[str] | None = Form(None)):
-    try:
-        models = WatchItems()
-        result = models.set_fallalert(project , switch , created , imeis)
-        return ResponsePayload[RT](success=True, message="Alert commands sent successfully", data=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-    
-@app.post('/locate')
-def locate(project: str = Form(...) , created: Optional[str] = Form(None) , imeis: list[str] | None = Form(None)):
-    try:
-        models = WatchItems()
-        result = models.set_locate(project, created, imeis)
-        return ResponsePayload[RT](success=True, message="Locate commands sent successfully", data=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post('/power')
-def poweroff(project: str = Form(...) , switch: str = Form(...) , created: Optional[str] = Form(None) , imeis: list[str] | None = Form(None)):
-    
-    try:
-        models = WatchItems()
-        if switch == '1':
-            flag = True
-        elif switch == '0':
-            flag = False
-        result = models.set_power(project, flag , created , imeis)
-        return ResponsePayload[RT](success=True, message="Power off commands sent successfully", data=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post('/get_setting_by_project')
-def get_setting_by_project(project: str = Form(...)):
-    try:
-        models = Settings()
-        result = models.get_setting_by_projects(project)
-        if not result:
-            return ResponsePayload[RT](success=False, message="No settings found for this project", data=None)
-        return ResponsePayload[RT](success=True, message="Settings fetched successfully", data=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Run the FastAPI server")
-    parser.add_argument("--host", type=str, default="localhost", help="Host to run the server on")
-    parser.add_argument("--port", type=int, default=8000, help="Port to run the server on")
-    parser.add_argument("--reload", action="store_true", help="Enable auto-reload", default=False)
-    # Disable bytecode generation as default 
-    args = parser.parse_args()
-    
-    uvicorn.run(app, host=args.host, port=args.port, reload=args.reload)
+    uvicorn.run("app.main:server", **server_args)

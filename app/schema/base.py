@@ -30,30 +30,26 @@ def serialize_mysql_datetime(v: Any):
     return None
 
 
-MySQLDateTime = Annotated[
-    datetime,
-    PlainSerializer(serialize_mysql_datetime),
-    BeforeValidator(validate_mysql_datetime)
-]
+MySQLDateTime = Annotated[datetime, PlainSerializer(serialize_mysql_datetime), BeforeValidator(validate_mysql_datetime)]
 JSONStrList = Annotated[list[str], BeforeValidator(lambda v: v.split(",") if isinstance(v, str) else v)]
 
 
 class DbModel(BaseModel):
     def model_dump(
-            self,
-            *,
-            mode: Literal['json', 'python'] | str = 'python',
-            include: IncEx | None = None,
-            exclude: IncEx | None = None,
-            context: Any | None = None,
-            by_alias: bool = False,
-            exclude_unset: bool = False,
-            exclude_defaults: bool = False,
-            exclude_none: bool = False,
-            round_trip: bool = False,
-            warnings: bool | Literal['none', 'warn', 'error'] = True,
-            serialize_as_any: bool = False,
-            db_fields: bool = False,
+        self,
+        *,
+        mode: Literal["json", "python"] | str = "python",
+        include: IncEx | None = None,
+        exclude: IncEx | None = None,
+        context: Any | None = None,
+        by_alias: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+        round_trip: bool = False,
+        warnings: bool | Literal["none", "warn", "error"] = True,
+        serialize_as_any: bool = False,
+        db_fields: bool = False,
     ) -> dict[str, Any]:
         if db_fields:
             values = {}
@@ -86,24 +82,24 @@ class DbModel(BaseModel):
             exclude_none=exclude_none,
             round_trip=round_trip,
             warnings=warnings,
-            serialize_as_any=serialize_as_any
+            serialize_as_any=serialize_as_any,
         )
 
     def model_dump_json(
-            self,
-            *,
-            indent: int | None = None,
-            include: IncEx | None = None,
-            exclude: IncEx | None = None,
-            context: Any | None = None,
-            by_alias: bool = False,
-            exclude_unset: bool = False,
-            exclude_defaults: bool = False,
-            exclude_none: bool = False,
-            round_trip: bool = False,
-            warnings: bool | Literal['none', 'warn', 'error'] = True,
-            serialize_as_any: bool = False,
-            db_fields: bool = False,
+        self,
+        *,
+        indent: int | None = None,
+        include: IncEx | None = None,
+        exclude: IncEx | None = None,
+        context: Any | None = None,
+        by_alias: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+        round_trip: bool = False,
+        warnings: bool | Literal["none", "warn", "error"] = True,
+        serialize_as_any: bool = False,
+        db_fields: bool = False,
     ) -> str:
         if db_fields:
             values = {}
@@ -158,10 +154,10 @@ class AliasRecord(DbModel):
     @model_validator(mode="after")
     def check_alias(self):
         if not self.alias:
-            if hasattr(self, 'title'):
-                self.alias = self.title.lower().replace(' ', '-')
-            elif hasattr(self, 'name'):
-                self.alias = self.name.lower().replace(' ', '-')
+            if hasattr(self, "title"):
+                self.alias = self.title.lower().replace(" ", "-")
+            elif hasattr(self, "name"):
+                self.alias = self.name.lower().replace(" ", "-")
             else:
                 self.alias = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
 
