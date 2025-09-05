@@ -6,7 +6,7 @@ from app.schema.base import IdRecord, DbModel
 class SettingFieldValue(DbModel):
     model_config = ConfigDict(coerce_numbers_to_str=True)
 
-    project_id: int | None = None
+    project_name: str | None = None
     field: str
     value: str | None = None
 

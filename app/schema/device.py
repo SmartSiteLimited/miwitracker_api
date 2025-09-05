@@ -7,6 +7,8 @@ class Device(BaseModel):
     id: int
     project: str
     imei: str
+    firmware_version: str | None = None
+    miwi_group_id: int | None = None
     iccid: str | None = None
     phone_number: str | None = None
     created: MySQLDateTime | None = None

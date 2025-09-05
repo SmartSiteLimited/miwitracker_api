@@ -20,3 +20,10 @@ class Projects:
         results = self.dbo.fetch_all()
 
         return [Project(**row) for row in results] if results else []
+
+    def check_group_id_exists_by_project(self, project_name: str) -> int | None:
+        query = Query()
+        query.Select("miwi_group_id").From("projects").Where("name = " + self.dbo.q(project_name))
+        self.dbo.execute(query)
+        result = self.dbo.fetch_one()
+        return result["miwi_group_id"] if result else None

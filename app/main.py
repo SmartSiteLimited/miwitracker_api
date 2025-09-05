@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_config
-from app.routes import devices, projects
+from app.routes import devices, projects , settings
 from app.schema.exceptions import AppException
 from app.schema.response import ResponsePayload
 
@@ -44,7 +44,7 @@ server.add_middleware(
 
 server.include_router(projects.router)
 server.include_router(devices.router)
-
+server.include_router(settings.router)
 
 @server.exception_handler(pydantic.ValidationError)
 async def validation_error_handler(request, exc: pydantic.ValidationError):
