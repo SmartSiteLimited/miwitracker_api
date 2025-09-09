@@ -351,3 +351,28 @@ class Miwi:
             return {"message": f"Group ID for project '{project}' updated successfully to {group_id}."}
         
         return {"message": f"Group ID for project '{project}' is already set to {group_id}."}
+    
+    async def get_group_list(self):
+        url = f"{self.api_endpoint}/api/organgroups/getorgangroupsinfolist"
+        headers = {"Authorization": f"Bearer {self.access_token}", "Content-Type": "application/json"}
+        payload = {"UserId": self.user_id}
+        async with httpx.AsyncClient() as client:
+            r = await client.post(url, headers=headers, json=payload, timeout=30.0)
+            response = r.json()
+            if response["State"] == 0:
+                return response["Item"]
+            return []
+        
+    async def delete_group(self , group_id):
+        if not group_id:
+            raise ValueError("Group ID is required.")
+        
+        url = f"{self.api_endpoint}/api/organgroups/delorgangroupsinfo"
+        headers = {"Authorization": f"Bearer {self.access_token}", "Content-Type": "application/json"}
+        payload = {"UserId": self.user_id, "GroupId": group_id}
+        async with httpx.AsyncClient() as client:
+            r = await client.post(url, headers=headers, json=payload, timeout=30.0)
+            response = r.json()
+            if response["State"] == 0:
+                return {"message": f"Group ID '{group_id}' deleted successfully."}
+            return {"message": f"Failed to delete Group ID '{group_id}'. Reason: {response.get('Message', 'Unknown error')}"}

@@ -27,3 +27,29 @@ class Projects:
         self.dbo.execute(query)
         result = self.dbo.fetch_one()
         return result["miwi_group_id"] if result else None
+    
+    def save_projects(self , projects : list[Project]) :
+        if not projects :
+            raise ValueError("No projects to save.")
+        for project in projects:
+            if project.id and project.id > 0:
+                update_data = {
+                    "id": project.id,
+                    "name": project.name,
+                    "url": project.url,
+                    "miwi_group_id": project.miwi_group_id,
+                }
+                self.dbo.update_object("projects", update_data, "id")
+            else :
+                insert_data = {
+                    "name": project.name,
+                    "url": project.url,
+                }
+                self.dbo.insert_object("projects", insert_data ,True)
+        
+    def delete_project(self , project_name: str) -> bool:
+        query = Query()
+        query.Delete("projects").Where("name = " + self.dbo.q(project_name))
+        self.dbo.execute(query)
+        self.dbo.commit()
+        return self.dbo.get_num_rows() > 0

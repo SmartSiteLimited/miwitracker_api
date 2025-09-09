@@ -123,3 +123,15 @@ async def add_update_group_id(dbo: Database = Depends(get_dbo), project = "" ):
     miwi = Miwi(dbo)
     result = await miwi.add_update_group_and_icc(project)
     return ResponsePayload(success=True, data=result)
+
+@router.get("/groupList/list")
+async def get_group_list(dbo: Database = Depends(get_dbo)):
+    miwi = Miwi(dbo)
+    result = await miwi.get_group_list()
+    return ResponsePayload(success=True, data=result)
+
+@router.delete("/deletegroups/{id}")
+async def delete_groups(dbo: Database = Depends(get_dbo), id = '' ):
+    miwi = Miwi(dbo)
+    result = await miwi.delete_group(id)
+    return ResponsePayload(success=True, data=result)
