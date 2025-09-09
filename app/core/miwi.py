@@ -363,8 +363,8 @@ class Miwi:
                 return response["Item"]
             return []
         
-    async def delete_group(self , group_id):
-        if not group_id:
+    async def delete_group(self , group_id , project):
+        if not group_id or not project :
             raise ValueError("Group ID is required.")
         
         url = f"{self.api_endpoint}/api/organgroups/delorgangroupsinfo"
@@ -374,5 +374,10 @@ class Miwi:
             r = await client.post(url, headers=headers, json=payload, timeout=30.0)
             response = r.json()
             if response["State"] == 0:
+                update_project_data = {
+                    "name": project,
+                    "miwi_group_id": None,
+                }
+                self.dbo.update_object("projects", update_project_data, "name", True)
                 return {"message": f"Group ID '{group_id}' deleted successfully."}
             return {"message": f"Failed to delete Group ID '{group_id}'. Reason: {response.get('Message', 'Unknown error')}"}

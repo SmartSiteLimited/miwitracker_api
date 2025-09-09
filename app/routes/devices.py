@@ -130,8 +130,8 @@ async def get_group_list(dbo: Database = Depends(get_dbo)):
     result = await miwi.get_group_list()
     return ResponsePayload(success=True, data=result)
 
-@router.delete("/deletegroups/{id}")
-async def delete_groups(dbo: Database = Depends(get_dbo), id = '' ):
+@router.delete("/deletegroups/{id}/{project}")
+async def delete_groups(dbo: Database = Depends(get_dbo), id = '' , project = ''):
     miwi = Miwi(dbo)
-    result = await miwi.delete_group(id)
+    result = await miwi.delete_group(id , project)
     return ResponsePayload(success=True, data=result)
