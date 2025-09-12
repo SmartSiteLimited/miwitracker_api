@@ -1,17 +1,13 @@
 import pydantic
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import get_config
-from app.routes import devices, projects , settings
+from app.routes import devices, groups, projects, settings
 from app.schema.exceptions import AppException
 from app.schema.response import ResponsePayload
-
-# from .dependencies import get_query_token, get_token_header
-# from .internal import admin
-# from .routers import items, users
 
 project_name = get_config('server.project_name', 'Smartsite DWSS API')
 origins = get_config('server.allow_origins', '*')
@@ -45,6 +41,7 @@ server.add_middleware(
 server.include_router(projects.router)
 server.include_router(devices.router)
 server.include_router(settings.router)
+server.include_router(groups.router)
 
 @server.exception_handler(pydantic.ValidationError)
 async def validation_error_handler(request, exc: pydantic.ValidationError):

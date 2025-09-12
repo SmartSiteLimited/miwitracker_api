@@ -2,9 +2,7 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Body, Depends, Query
 
-from app.core import miwi
 from app.core.db import Database, get_dbo
-from app.core.logger import get_logger
 from app.core.miwi import Miwi
 from app.models.devices import Devices
 from app.schema.response import ResponsePayload
@@ -31,52 +29,59 @@ async def locate(dbo: Database = Depends(get_dbo), imei=""):
 
     return ResponsePayload(success=True, data=result)
 
+
 @router.post("/task/setphonebook/{imei}")
-async def set_book_phone(dbo: Database = Depends(get_dbo) ,imei=""):
+async def set_book_phone(dbo: Database = Depends(get_dbo), imei=""):
     miwi = Miwi(dbo)
-    result = await miwi.setPhoneBook(imei)
+    result = await miwi.set_phone_book(imei)
 
     return ResponsePayload(success=True, data=result)
+
 
 @router.post("/task/setblockphone/{imei}")
-async def setblockphone(dbo: Database = Depends(get_dbo) ,imei=""):
+async def setblockphone(dbo: Database = Depends(get_dbo), imei=""):
     miwi = Miwi(dbo)
-    result = await miwi.setBlockPhone(imei)
+    result = await miwi.set_block_phone(imei)
 
     return ResponsePayload(success=True, data=result)
+
 
 @router.post("/task/setsos/{imei}")
-async def setsos(dbo: Database = Depends(get_dbo) ,imei=""):
+async def setsos(dbo: Database = Depends(get_dbo), imei=""):
     miwi = Miwi(dbo)
-    result = await miwi.setSOS(imei)
+    result = await miwi.set_sos(imei)
 
     return ResponsePayload(success=True, data=result)
+
 
 @router.post("/task/sethealth/{imei}")
-async def sethealth(dbo: Database = Depends(get_dbo) ,imei=""):
+async def sethealth(dbo: Database = Depends(get_dbo), imei=""):
     miwi = Miwi(dbo)
-    result = await miwi.setHealth(imei)
+    result = await miwi.set_health(imei)
 
     return ResponsePayload(success=True, data=result)
+
 
 @router.post("/task/setcallcenter/{imei}")
-async def setcallcenter(dbo: Database = Depends(get_dbo) ,imei=""):
+async def setcallcenter(dbo: Database = Depends(get_dbo), imei=""):
     miwi = Miwi(dbo)
-    result = await miwi.setCallCenter(imei)
+    result = await miwi.set_call_center(imei)
 
     return ResponsePayload(success=True, data=result)
+
 
 @router.post("/task/reboot/{imei}")
-async def setReboot(dbo: Database = Depends(get_dbo) ,imei=""):
+async def reboot(dbo: Database = Depends(get_dbo), imei=""):
     miwi = Miwi(dbo)
-    result = await miwi.setReboot(imei)
+    result = await miwi.reboot(imei)
 
     return ResponsePayload(success=True, data=result)
 
+
 @router.post("/task/poweroff/{imei}")
-async def setPowerOff(dbo: Database = Depends(get_dbo) ,imei=""):
+async def power_off(dbo: Database = Depends(get_dbo), imei=""):
     miwi = Miwi(dbo)
-    result = await miwi.setPowerOff(imei)
+    result = await miwi.power_off(imei)
 
     return ResponsePayload(success=True, data=result)
 
@@ -94,11 +99,13 @@ async def get_devices(
 
     return ResponsePayload(success=True, data=data)
 
+
 @router.post("/save/{project}")
 async def save_device(dbo: Database = Depends(get_dbo), project="", payload: Dict[str, Any] = Body(...)):
     device = Devices(dbo)
-    result = await device.save_device(payload , project)
+    result = await device.save_device(payload, project)
     return ResponsePayload(success=True, data=result)
+
 
 @router.get("/updateICCID/get_devices")
 async def update_iccid(dbo: Database = Depends(get_dbo), miwi_group_id=None):
@@ -106,32 +113,9 @@ async def update_iccid(dbo: Database = Depends(get_dbo), miwi_group_id=None):
     result = await miwi.update_iccid(miwi_group_id)
     return ResponsePayload(success=True, data=result)
 
-@router.get("/groupsList/options")
-async def get_groups_list(dbo: Database = Depends(get_dbo)):
-    miwi = Miwi(dbo)
-    result = await miwi.get_groups_list()
-    return ResponsePayload(success=True, data=result)
-
-@router.get("/addMiwiGroup/{project}")
-async def add_miwi_group(dbo: Database = Depends(get_dbo), project=""):
-    miwi = Miwi(dbo)
-    result = await miwi.add_miwi_group(project)
-    return ResponsePayload(success=True, data=result)
 
 @router.get("/addupdateGroupId/{project}")
-async def add_update_group_id(dbo: Database = Depends(get_dbo), project = "" ):
+async def add_update_group_id(dbo: Database = Depends(get_dbo), project=""):
     miwi = Miwi(dbo)
-    result = await miwi.add_update_group_and_icc(project)
-    return ResponsePayload(success=True, data=result)
-
-@router.get("/groupList/list")
-async def get_group_list(dbo: Database = Depends(get_dbo)):
-    miwi = Miwi(dbo)
-    result = await miwi.get_group_list()
-    return ResponsePayload(success=True, data=result)
-
-@router.delete("/deletegroups/{id}/{project}")
-async def delete_groups(dbo: Database = Depends(get_dbo), id = '' , project = ''):
-    miwi = Miwi(dbo)
-    result = await miwi.delete_group(id , project)
+    result = await miwi.update_group_and_iccid(project)
     return ResponsePayload(success=True, data=result)
