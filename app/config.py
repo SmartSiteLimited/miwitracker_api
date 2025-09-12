@@ -1,6 +1,5 @@
 import configparser
 from pathlib import Path
-from typing import Union
 
 CONFIG = {}
 ROOT_PATH = Path(__file__).parent.parent.resolve()
@@ -9,7 +8,7 @@ APP_PATH = ROOT_PATH / "app"
 PUBLIC_PATH = ROOT_PATH / "public"
 
 
-def get_config(path: str, default=None) -> Union[str, dict, list, int, float, bool, None]:
+def get_config(path: str, default=None) -> str | dict | list | int | float | bool | None:
     global CONFIG
     if not CONFIG:
         load_config()

@@ -9,8 +9,8 @@ from app.routes import devices, groups, projects, settings
 from app.schema.exceptions import AppException
 from app.schema.response import ResponsePayload
 
-project_name = get_config('server.project_name', 'Smartsite DWSS API')
-origins = get_config('server.allow_origins', '*')
+project_name = get_config("server.project_name", "Miwitracker API")
+origins = get_config("server.allow_origins", "*")
 
 
 @asynccontextmanager
@@ -31,7 +31,7 @@ server = FastAPI(
 
 server.add_middleware(
     CORSMiddleware,
-    allow_origins=origins.split(','),
+    allow_origins=origins.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -42,6 +42,7 @@ server.include_router(projects.router)
 server.include_router(devices.router)
 server.include_router(settings.router)
 server.include_router(groups.router)
+
 
 @server.exception_handler(pydantic.ValidationError)
 async def validation_error_handler(request, exc: pydantic.ValidationError):

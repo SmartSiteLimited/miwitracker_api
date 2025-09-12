@@ -1,9 +1,11 @@
-from pydantic import BaseModel, ConfigDict
 import json
-from app.schema.base import IdRecord, DbModel
+
+from pydantic import BaseModel, ConfigDict
+
+from app.schema.base import DbModel
 
 
-class SettingFieldValue(DbModel):
+class ProjectSetting(DbModel):
     model_config = ConfigDict(coerce_numbers_to_str=True)
 
     project_name: str | None = None
@@ -11,9 +13,9 @@ class SettingFieldValue(DbModel):
     value: str | None = None
 
 
-class SettingFieldValues(DbModel):
+class ProjectSettings(DbModel):
     @classmethod
-    def parse_form_values(cls, form_values: list[SettingFieldValue]):
+    def parse_form_values(cls, form_values: list[ProjectSetting]):
         # to dict
         form_values_dict = {}
         for form_value in form_values:
@@ -27,3 +29,13 @@ class SettingFieldValues(DbModel):
             form_values_dict[form_value.field] = form_value.value
 
         return form_values_dict
+
+
+class SettingAttributePayload(BaseModel):
+    key: str
+    value: str
+
+
+class SettingPayload(BaseModel):
+    project: str
+    attributes: list[SettingAttributePayload]

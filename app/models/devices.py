@@ -1,7 +1,7 @@
-from app.schema.device import Device
-from app.core import db
-from app.core.db import Database, Query
 from datetime import datetime
+
+from app.core.db import Database, Query
+from app.schema.device import Device
 
 
 class Devices:

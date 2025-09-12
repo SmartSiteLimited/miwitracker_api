@@ -1,42 +1,23 @@
-from typing import Any, Dict, List, Optional
-
-import json
-
-from fastapi import APIRouter, Body, Depends, Form, Query ,Form
-from pydantic import BaseModel, field_validator
+from fastapi import APIRouter, Depends
 
 from app.core.db import Database, get_dbo
-from app.core.logger import get_logger
-# from app.core.miwi import Miwi
 from app.models.settings import Settings
 from app.schema.response import ResponsePayload
+from app.schema.settings import SettingPayload
 
 router = APIRouter(prefix="/settings")
 
-class SaveConfigPayload(BaseModel):
-    attributes: List[Any]
-    project: str
-
-    @field_validator('attributes', mode='before')
-    def parse_attributes(cls, v):
-        # Accept a JSON parse object type and parse it
-        if isinstance(v, str):
-            try:
-                return json.loads(v)
-            except Exception:
-                raise ValueError('attributes must be a valid JSON array of objects')
-        return v
 
 @router.post("/saveConfig")
-async def saveConfig(dbo: Database = Depends(get_dbo), payload: SaveConfigPayload = Body(...)):
-
+async def save_config(payload: SettingPayload, dbo: Database = Depends(get_dbo)):
     settings = Settings(dbo)
-    result = settings.saveConfig(payload.attributes, payload.project)
+    result = settings.save(payload.project, payload.attributes)
 
     return ResponsePayload(success=True, data=result)
+
+
 @router.get("/{project}")
-def getConfig(project: str, dbo: Database = Depends(get_dbo)):
+def get_config(project: str, dbo: Database = Depends(get_dbo)):
     settings = Settings(dbo)
-    result = settings.get_setting_by_projects(project)
+    result = settings.get_by_project(project)
     return ResponsePayload(success=True, data=result)
-

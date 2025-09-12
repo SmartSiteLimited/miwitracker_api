@@ -1,11 +1,7 @@
-from typing import Generic, TypeVar
-
 from pydantic import BaseModel
 
-RT = TypeVar("RT")
 
-
-class ResponsePayload(BaseModel, Generic[RT]):
+class ResponsePayload[RT](BaseModel):
     success: bool
     data: RT | None = None
     message: str | None = None

@@ -86,7 +86,7 @@ class Miwi:
     async def check_onlines(self, imeis: list[str] | None = None, miwi_group_id=None) -> bool:
         devices = await self.get_devices(miwi_group_id)
         online_devices = list(filter(lambda x: x["Status"] == 1 and x["Imei"] in imeis, devices))
-        results = {imei: False for imei in (imeis or [])}
+        results = dict.fromkeys(imeis or [], False)
 
         for device in online_devices:
             if device["Imei"] in results:
@@ -137,16 +137,16 @@ class Miwi:
         if not device:
             raise ValueError(status_code=404, detail="Device not found")
 
-        settings = Settings(self.dbo).get_setting_by_projects(device.project)
+        settings = Settings(self.dbo).get_by_project(device.project)
         if not settings:
             raise ValueError(status_code=404, detail="Settings not found")
 
-        phone_number_list = settings.get("phone_number", [])
-        if not settings.get("phone_number"):
+        sos_phone_numbers = settings.get("sos_phone_number", [])
+        if not sos_phone_numbers:
             raise ValueError("Phonebook settings not found")
 
         phone_book_settings = []
-        for entry in phone_number_list:
+        for entry in sos_phone_numbers:
             entry_number_list = entry.split(",")
             for entry in entry_number_list:
                 new_entry = {"Name": "SOS", "Number": entry}
@@ -200,7 +200,7 @@ class Miwi:
             raise ValueError("Device not found")
 
         timestamp = datetime.now().isoformat()
-        settings = Settings(self.dbo).get_setting_by_projects(device.project)
+        settings = Settings(self.dbo).get_by_project(device.project)
         if not settings or not settings.get("call_center_number"):
             raise ValueError("Settings not found")
 

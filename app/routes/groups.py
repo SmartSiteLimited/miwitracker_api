@@ -1,12 +1,8 @@
-from typing import Any, Dict, Optional
-
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Depends
 from pydantic import ValidationError
 
 from app.core.db import Database, get_dbo
 from app.core.miwi import Miwi
-from app.models.devices import Devices
-from app.schema import project
 from app.schema.group import GroupCreatePayload
 from app.schema.response import ResponsePayload
 
@@ -22,17 +18,14 @@ async def get_group_list(dbo: Database = Depends(get_dbo)):
 
 
 @router.post("/create")
-async def create_group(
-    dbo: Database = Depends(get_dbo),
-    payload: GroupCreatePayload = Body(...)
-):
+async def create_group(dbo: Database = Depends(get_dbo), payload: GroupCreatePayload = Body(...)):
     if payload.group_name:
         miwi = Miwi(dbo)
         result = await miwi.create_group(payload.group_name, payload.description)
         return ResponsePayload(success=True, data=result)
-    
+
     raise ValidationError("Group name is required.")
-    
+
 
 @router.delete("/{gid}")
 async def delete_group(dbo: Database = Depends(get_dbo), gid=0):

@@ -1,6 +1,6 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Depends
 
 from app.core.db import Database, get_dbo
 from app.core.miwi import Miwi
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/devices")
 
 
 @router.post("/task/check-online")
-async def check_online(dbo: Database = Depends(get_dbo), body: Dict[str, Any] = Body(...)):
+async def check_online(dbo: Database = Depends(get_dbo), body: dict[str, Any] = Body(...)):
     imeis = body.get("imeis")
     if imeis is None or len(imeis) == 0:
         return ResponsePayload(success=False, message="No imeis provided")
@@ -89,9 +89,7 @@ async def power_off(dbo: Database = Depends(get_dbo), imei=""):
 @router.get("/{project}")
 @router.post("/{project}")
 @router.post("/")
-async def get_devices(
-    dbo: Database = Depends(get_dbo), project="", body: Optional[Dict[str, Any]] = Body(default=None)
-):
+async def get_devices(dbo: Database = Depends(get_dbo), project="", body: dict[str, Any] | None = Body(default=None)):
     devices = Devices(dbo)
 
     filters = body.get("filters") if body else None
@@ -101,7 +99,7 @@ async def get_devices(
 
 
 @router.post("/save/{project}")
-async def save_device(dbo: Database = Depends(get_dbo), project="", payload: Dict[str, Any] = Body(...)):
+async def save_device(dbo: Database = Depends(get_dbo), project="", payload: dict[str, Any] = Body(...)):
     device = Devices(dbo)
     result = await device.save_device(payload, project)
     return ResponsePayload(success=True, data=result)
