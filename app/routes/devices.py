@@ -85,6 +85,14 @@ async def power_off(dbo: Database = Depends(get_dbo), imei=""):
 
     return ResponsePayload(success=True, data=result)
 
+@router.post("/task/setfallalert/{imei}")
+async def set_fall_alert(dbo: Database = Depends(get_dbo), imei=""):
+    miwi = Miwi(dbo)
+    result = await miwi.set_fall_alert(imei)
+    
+    return ResponsePayload(success=True, data=result)
+    
+
 
 @router.get("/{project}")
 @router.post("/{project}")
