@@ -37,11 +37,7 @@ class SPAStaticFiles(StaticFiles):
                 raise ex
 
 
-server = FastAPI(
-    title="Miwitracker API",
-    version="1.0.0",
-    lifespan=lifespan,
-)
+server = FastAPI(title="Miwitracker API", version="1.0.0", lifespan=lifespan, redirect_slashes=True)
 
 server.mount("/webapp", SPAStaticFiles(directory="webapp", html=True), name="webapp")
 
