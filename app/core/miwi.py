@@ -123,9 +123,16 @@ class Miwi:
 
         return response["Code"] == 0
     
-    async def set_fall_alert(self , imei: str) ->bool:
+    async def set_fall_alert(self , imei: str , project) ->bool:
         try : 
-            response = await self.turn_on(imei , 8)
+            setting = Settings(self.dbo).get_by_project(project)
+            if not setting or not setting.get("sensitivity"):
+                level = 8
+            else :
+                level_list = setting.get("sensitivity")
+                #get the first item if it's a list                
+                level = int(level_list[0])
+            response = await self.turn_on(imei , level)
             if response:
                 update_data = {"imei": imei, "updated": datetime.now().isoformat()}
                 self.dbo.update_object("devices", update_data, "imei")
