@@ -1,8 +1,11 @@
 from datetime import datetime
 
 from app.core.db import Database, Query
+from app.schema import device
 from app.schema.device import Device
-
+import httpx
+from app.config import get_config
+import json 
 
 class Devices:
     def __init__(self, dbo: Database):
@@ -90,3 +93,36 @@ class Devices:
         self.dbo.execute(query)
         results = self.dbo.fetch_all()
         return [Device(**row) for row in results] if results else []
+    
+    async def update_all_devices_from_platform(self) -> list[Device]:
+        #fetch the json data from the platform
+        fetch_url = get_config("miwitracker.device_url")
+        print(f"Fetching device data from: {fetch_url}")
+        #set no cert verify
+        response = httpx.get(fetch_url, verify=False)
+        if response.status_code != 200:
+            raise ValueError("Failed to fetch data from the platform.")
+        devices_data = response.json()
+        #get the key as imei id and value.project as project name
+        for key in devices_data:
+            imei = key 
+            project = devices_data[key].get("topic", "topic")
+            if imei and project:
+                existing_device = self.get_device_by_imei(imei)
+                if not existing_device:
+                    insert_data = {
+                        "imei": imei,
+                        "project": project,
+                        "created": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                    self.dbo.insert_object("devices", insert_data)
+                else:
+                    update_object = {
+                        "imei": imei,
+                        "project": project,
+                        "updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                    self.dbo.update_object("devices", update_object, ["imei"], True)
+            
+        

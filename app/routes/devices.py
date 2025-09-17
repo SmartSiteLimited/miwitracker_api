@@ -125,3 +125,9 @@ async def add_update_group_id(dbo: Database = Depends(get_dbo), project=""):
     miwi = Miwi(dbo)
     result = await miwi.update_group_and_iccid(project)
     return ResponsePayload(success=True, data=result)
+
+@router.get("/updateImeis/{project}")
+async def update_all_devices_from_platform(dbo: Database = Depends(get_dbo)):
+    device = Devices(dbo)
+    result = await device.update_all_devices_from_platform()
+    return ResponsePayload(success=True, data=result)

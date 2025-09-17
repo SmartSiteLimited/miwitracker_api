@@ -279,6 +279,7 @@ version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
+    { name = "httpx" },
     { name = "mariadb" },
 ]
 
@@ -290,6 +291,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.116.1" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "mariadb", specifier = ">=1.1.13" },
 ]
 
