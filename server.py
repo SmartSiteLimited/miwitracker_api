@@ -4,7 +4,7 @@ import platform
 
 import uvicorn
 
-from app.config import get_config, ROOT_PATH
+from app.config import get_config
 
 port = int(get_config("server.port", 5000))
 host = get_config("server.host", "0.0.0.0")
