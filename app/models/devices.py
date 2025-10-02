@@ -1,11 +1,11 @@
 from datetime import datetime
 
-from app.core.db import Database, Query
-from app.schema import device
-from app.schema.device import Device
 import httpx
+
 from app.config import get_config
-import json 
+from app.core.db import Database, Query
+from app.schema.device import Device
+
 
 class Devices:
     def __init__(self, dbo: Database):
@@ -93,36 +93,64 @@ class Devices:
         self.dbo.execute(query)
         results = self.dbo.fetch_all()
         return [Device(**row) for row in results] if results else []
-    
-    async def update_all_devices_from_platform(self) -> list[Device]:
-        #fetch the json data from the platform
-        fetch_url = get_config("miwitracker.device_url")
-        print(f"Fetching device data from: {fetch_url}")
-        #set no cert verify
-        response = httpx.get(fetch_url, verify=False)
+
+    async def fetch_new_devices(self, project: str) -> list[Device]:
+        # fetch the json data from the platform
+        fetch_url = get_config("miwitracker.fetch_device_url")
+
+        data = {
+            "project": project,
+        }
+
+        # set no cert verify
+        response = httpx.post(fetch_url, verify=False, json=data, timeout=10)
         if response.status_code != 200:
             raise ValueError("Failed to fetch data from the platform.")
-        devices_data = response.json()
-        #get the key as imei id and value.project as project name
-        for key in devices_data:
-            imei = key 
-            project = devices_data[key].get("topic", "topic")
-            if imei and project:
-                existing_device = self.get_device_by_imei(imei)
-                if not existing_device:
-                    insert_data = {
-                        "imei": imei,
-                        "project": project,
-                        "created": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    }
-                    self.dbo.insert_object("devices", insert_data)
-                else:
-                    update_object = {
-                        "imei": imei,
-                        "project": project,
-                        "updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    }
-                    self.dbo.update_object("devices", update_object, ["imei"], True)
-            
-        
+
+        resp = response.json()
+        if not resp.get("success"):
+            raise ValueError("Failed to fetch data from the platform: " + resp.get("message", "Unknown error"))
+
+        devices_data = resp.get("data", {})
+
+        # collect IMEIs from platform response
+        new_imeis = set()
+        for imei, title in devices_data.items():
+            if imei and isinstance(imei, str) and imei.strip():
+                new_imeis.add(imei.strip())
+
+        # existing IMEIs in the DB for this project
+        existing_imeis = set(self.get_imei_by_project(project))
+
+        # insert or update devices from the fetched list
+        for imei in new_imeis:
+            existing_device = self.get_device_by_imei(imei)
+            if not existing_device:
+                insert_data = {
+                    "imei": imei,
+                    "project": project,
+                    "created": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                }
+                if self.dbo.insert_object("devices", insert_data):
+                    print(f"Inserted new device with IMEI: {imei}")
+            else:
+                update_object = {
+                    "imei": imei,
+                    "project": project,
+                    "updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                }
+                if self.dbo.update_object("devices", update_object, ["imei"], True):
+                    print(f"Updated existing device with IMEI: {imei}")
+
+        # delete devices that exist in DB but were not present in the fetched list
+        to_delete = existing_imeis - new_imeis
+        for imei in to_delete:
+            query = Query()
+            query.Delete("devices").Where("imei = " + self.dbo.q(imei)).Where("project = " + self.dbo.q(project))
+            self.dbo.execute(query)
+            print(f"Deleted device with IMEI: {imei}")
+
+        # commit all changes and return current devices for the project
+        self.dbo.commit()
+        return self.get_devices_by_project(project)

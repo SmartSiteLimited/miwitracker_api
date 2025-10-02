@@ -85,25 +85,13 @@ async def power_off(dbo: Database = Depends(get_dbo), imei=""):
 
     return ResponsePayload(success=True, data=result)
 
+
 @router.post("/task/setfallalert/{imei}/{project}")
-async def set_fall_alert(dbo: Database = Depends(get_dbo), imei="" , project=""):
+async def set_fall_alert(dbo: Database = Depends(get_dbo), imei="", project=""):
     miwi = Miwi(dbo)
     result = await miwi.set_fall_alert(imei, project)
-    
+
     return ResponsePayload(success=True, data=result)
-    
-
-
-@router.get("/{project}")
-@router.post("/{project}")
-@router.post("/")
-async def get_devices(dbo: Database = Depends(get_dbo), project="", body: dict[str, Any] | None = Body(default=None)):
-    devices = Devices(dbo)
-
-    filters = body.get("filters") if body else None
-    data = devices.get_devices(project, filters or {})
-
-    return ResponsePayload(success=True, data=data)
 
 
 @router.post("/save/{project}")
@@ -126,8 +114,24 @@ async def add_update_group_id(dbo: Database = Depends(get_dbo), project=""):
     result = await miwi.update_group_and_iccid(project)
     return ResponsePayload(success=True, data=result)
 
-@router.get("/updateImeis/{project}")
-async def update_all_devices_from_platform(dbo: Database = Depends(get_dbo)):
+
+@router.get("/fetchNewDevices/{project}")
+async def fetch_new_devices(project="", dbo: Database = Depends(get_dbo)):
+    if not project:
+        return ResponsePayload(success=False, message="Project name is required.")
+
     device = Devices(dbo)
-    result = await device.update_all_devices_from_platform()
+    result = await device.fetch_new_devices(project)
     return ResponsePayload(success=True, data=result)
+
+
+@router.get("/{project}")
+@router.post("/{project}")
+@router.post("/")
+async def get_devices(dbo: Database = Depends(get_dbo), project="", body: dict[str, Any] | None = Body(default=None)):
+    devices = Devices(dbo)
+
+    filters = body.get("filters") if body else None
+    data = devices.get_devices(project, filters or {})
+
+    return ResponsePayload(success=True, data=data)
