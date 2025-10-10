@@ -93,24 +93,14 @@ class Miwi:
                 results[device["Imei"]] = True
 
         return results
-    
-    async def turn_on(self , imei: str , level = 8) -> bool:
+
+    async def turn_on(self, imei: str, level=8) -> bool:
         timestamp = datetime.now().isoformat()
-        payload = {
-            "Imei": imei,
-            "timestamp": timestamp,
-            "CommandCode": "9203",
-            "CommandValue": "1,1"
-        }
-        
+        payload = {"Imei": imei, "timestamp": timestamp, "CommandCode": "9203", "CommandValue": "1,1"}
+
         if await self.send_command(payload):
             timestamp = datetime.now().isoformat()
-            payload = {
-                "Imei": imei,
-                "timestamp": timestamp,
-                "CommandCode": "9722",
-                "CommandValue": str(level)
-            }
+            payload = {"Imei": imei, "timestamp": timestamp, "CommandCode": "9722", "CommandValue": str(level)}
             return await self.send_command(payload)
 
         return False
@@ -122,17 +112,17 @@ class Miwi:
             return False
 
         return response["Code"] == 0
-    
-    async def set_fall_alert(self , imei: str , project) ->bool:
-        try : 
+
+    async def set_fall_alert(self, imei: str, project) -> bool:
+        try:
             setting = Settings(self.dbo).get_by_project(project)
             if not setting or not setting.get("sensitivity"):
                 level = 8
-            else :
+            else:
                 level_list = setting.get("sensitivity")
-                #get the first item if it's a list                
+                # get the first item if it's a list
                 level = int(level_list[0])
-            response = await self.turn_on(imei , level)
+            response = await self.turn_on(imei, level)
             if response:
                 update_data = {"imei": imei, "updated": datetime.now().isoformat()}
                 self.dbo.update_object("devices", update_data, "imei")
@@ -266,14 +256,25 @@ class Miwi:
 
     async def set_sos(self, imei: str) -> bool:
         timestamp = datetime.now().isoformat()
-        try:
-            payload = {"Imei": imei, "timestamp": timestamp, "CommandCode": "0001", "CommandValue": "1"}
-            response = await self.send_command(payload)
-            if response:
-                update_data = {"imei": imei, "updated": datetime.now().isoformat()}
-                self.dbo.update_object("devices", update_data, "imei")
-        except Warning:
-            return False
+        device = Devices(self.dbo).get_device_by_imei(imei)
+        if not device:
+            raise ValueError("Device not found")
+        settings = Settings(self.dbo).get_by_project(device.project)
+        if not settings or not settings.get("sos_phone_number"):
+            raise ValueError("Settings not found")
+        sos_phone_number_list = settings.get("sos_phone_number")
+        # convert to list as ["abc"] or ["abc","def"]
+        if isinstance(sos_phone_number_list, str):
+            sos_phone_number_list = [num.strip() for num in sos_phone_number_list.split(",") if num.strip()]
+        for number in sos_phone_number_list:
+            try:
+                payload = {"Imei": imei, "timestamp": timestamp, "CommandCode": "0001", "CommandValue": number}
+                response = await self.send_command(payload)
+                if response:
+                    update_data = {"imei": imei, "updated": datetime.now().isoformat()}
+                    self.dbo.update_object("devices", update_data, "imei")
+            except Warning:
+                return False
 
         return response["Code"] == 0
 
