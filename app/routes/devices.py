@@ -94,6 +94,14 @@ async def set_fall_alert(dbo: Database = Depends(get_dbo), imei="", project=""):
     return ResponsePayload(success=True, data=result)
 
 
+@router.post("/task/offfallalert/{imei}/{project}")
+async def off_fall_alert(dbo: Database = Depends(get_dbo), imei="", project=""):
+    miwi = Miwi(dbo)
+    result = await miwi.off_fall_alert(imei, project)
+
+    return ResponsePayload(success=True, data=result)
+
+
 @router.post("/save/{project}")
 async def save_device(dbo: Database = Depends(get_dbo), project="", payload: dict[str, Any] = Body(...)):
     device = Devices(dbo)

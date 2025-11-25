@@ -105,6 +105,11 @@ class Miwi:
 
         return False
 
+    async def turn_off(self, imei: str) -> bool:
+        timestamp = datetime.now().isoformat()
+        payload = {"Imei": imei, "timestamp": timestamp, "CommandCode": "9203", "CommandValue": "0,0"}
+        return await self.send_command(payload)
+
     async def locate(self, imei: str) -> bool:
         try:
             response = await self.send_command({"Imei": imei, "CommandCode": "0039", "CommandValue": ""})
@@ -251,6 +256,18 @@ class Miwi:
                     self.dbo.update_object("devices", update_data, "imei")
             except Warning:
                 return False
+
+        return response["Code"] == 0
+
+    async def off_fall_alert(self, imei: str) -> bool:
+        timestamp = datetime.now().isoformat()
+        try:
+            response = await self.turn_off(imei)
+            if response:
+                update_data = {"imei": imei, "updated": timestamp}
+                self.dbo.update_object("devices", update_data, "imei")
+        except Warning:
+            return False
 
         return response["Code"] == 0
 
