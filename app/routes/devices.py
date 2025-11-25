@@ -94,10 +94,10 @@ async def set_fall_alert(dbo: Database = Depends(get_dbo), imei="", project=""):
     return ResponsePayload(success=True, data=result)
 
 
-@router.post("/task/offfallalert/{imei}/{project}")
-async def off_fall_alert(dbo: Database = Depends(get_dbo), imei="", project=""):
+@router.post("/task/offfallalert/{imei}/")
+async def off_fall_alert(dbo: Database = Depends(get_dbo), imei=""):
     miwi = Miwi(dbo)
-    result = await miwi.off_fall_alert(imei, project)
+    result = await miwi.off_fall_alert(imei)
 
     return ResponsePayload(success=True, data=result)
 
