@@ -209,8 +209,42 @@ class Miwi:
             return False
 
         return response["Code"] == 0
+    
+    async def set_bodytemp(self, imei: str):
+        timestamp = datetime.now().isoformat()
 
-    async def set_health(self, imei: str) -> bool:
+        payload = {
+            "Imei": imei,
+            "Time": timestamp,
+            "CommandCode": "9113",
+            "CommandValue": '1,1'
+        }
+        try :
+            response = await self.send_command(payload)
+            if response:
+                update_data = {"imei": imei, "updated": datetime.now().isoformat()}
+                self.dbo.update_object("devices", update_data, "imei")
+        except Warning:
+            return False
+
+    async def set_gpstrack(self, imei: str):
+        timestamp = datetime.now().isoformat()
+
+        payload = {
+            "Imei": imei,
+            "Time": timestamp,
+            "CommandCode": "0305",
+            "CommandValue": '10'
+        }        
+        try :
+            response = await self.send_command(payload)
+            if response:
+                update_data = {"imei": imei, "updated": datetime.now().isoformat()}
+                self.dbo.update_object("devices", update_data, "imei")
+        except Warning:
+            return False
+        
+    async def set_health_command(self, imei: str) -> bool:
         timestamp = datetime.now().isoformat()
         try:
             payload = {
@@ -225,8 +259,16 @@ class Miwi:
                 self.dbo.update_object("devices", update_data, "imei")
         except Warning:
             return False
+        
 
-        return response["Code"] == 0
+    async def set_health(self, imei: str) -> bool:
+        timestamp = datetime.now().isoformat()
+        
+        await self.set_bodytemp(imei)
+        await self.set_gpstrack(imei)
+        await self.set_health_command(imei)
+
+        return True
 
     async def set_call_center(self, imei: str) -> bool:
         device = Devices(self.dbo).get_device_by_imei(imei)
