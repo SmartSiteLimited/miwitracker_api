@@ -279,25 +279,36 @@ class Miwi:
         settings = Settings(self.dbo).get_by_project(device.project)
         if not settings or not settings.get("call_center_number"):
             raise ValueError("Settings not found")
-
+        
+        
         call_center_number_list = settings.get("call_center_number")
+        # Convert list to comma-separated string if it's a list, otherwise use as-is
+        if isinstance(call_center_number_list, list):
+            call_center_number_list = call_center_number_list
+        elif isinstance(call_center_number_list, str):
+            call_center_number_list = [call_center_number_list]
+        else:
+            call_center_number_list = []
+        
+        call_center_number = ",".join(call_center_number_list) 
+        print(call_center_number)
+        
         if not call_center_number_list:
             raise ValueError("Call center number not found")
-
-        for call_center_number in call_center_number_list:
-            try:
-                payload = {
-                    "Imei": imei,
-                    "timestamp": timestamp,
-                    "CommandCode": "9602",
-                    "CommandValue": call_center_number,
-                }
-                response = await self.send_command(payload)
-                if response:
-                    update_data = {"imei": imei, "updated": datetime.now().isoformat()}
-                    self.dbo.update_object("devices", update_data, "imei")
-            except Warning:
-                return False
+        
+        try:
+            payload = {
+                "Imei": imei,
+                "timestamp": timestamp,
+                "CommandCode": "9602",
+                "CommandValue": call_center_number,
+            }
+            response = await self.send_command(payload)
+            if response:
+                update_data = {"imei": imei, "updated": datetime.now().isoformat()}
+                self.dbo.update_object("devices", update_data, "imei")
+        except Warning:
+            return False
 
         return response["Code"] == 0
 
@@ -323,17 +334,34 @@ class Miwi:
             raise ValueError("Settings not found")
         sos_phone_number_list = settings.get("sos_phone_number")
         # convert to list as ["abc"] or ["abc","def"]
-        if isinstance(sos_phone_number_list, str):
-            sos_phone_number_list = [num.strip() for num in sos_phone_number_list.split(",") if num.strip()]
-        for number in sos_phone_number_list:
-            try:
-                payload = {"Imei": imei, "timestamp": timestamp, "CommandCode": "0001", "CommandValue": number}
-                response = await self.send_command(payload)
-                if response:
-                    update_data = {"imei": imei, "updated": datetime.now().isoformat()}
-                    self.dbo.update_object("devices", update_data, "imei")
-            except Warning:
-                return False
+        
+        if isinstance(sos_phone_number_list, list):
+            sos_phone_number_list = sos_phone_number_list
+        elif isinstance(sos_phone_number_list, str):
+            sos_phone_number_list = [sos_phone_number_list]
+        else:
+            sos_phone_number_list = []
+        
+        
+        sos_join_string = ",".join(sos_phone_number_list)
+        # phone_book_settings = []    
+        # for entry in sos_phone_number_list:
+        #     new_entry = {"Name": "SOS", "Number": entry}
+        #     phone_book_settings.append(new_entry)
+        # settings_payload = json.dumps(phone_book_settings)
+        
+        #get the type for the list 
+        print(type(sos_phone_number_list))
+        print(sos_phone_number_list)
+        
+        try:
+            payload = {"Imei": imei, "timestamp": timestamp, "CommandCode": "0001", "CommandValue": sos_join_string}
+            response = await self.send_command(payload)
+            if response:
+                update_data = {"imei": imei, "updated": datetime.now().isoformat()}
+                self.dbo.update_object("devices", update_data, "imei")
+        except Warning:
+            return False
 
         return response["Code"] == 0
 
