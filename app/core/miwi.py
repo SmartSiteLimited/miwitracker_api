@@ -95,6 +95,8 @@ class Miwi:
         return results
 
     async def turn_on(self, imei: str, level=8) -> bool:
+        
+        
         timestamp = datetime.now().isoformat()
         payload = {"Imei": imei, "timestamp": timestamp, "CommandCode": "9203", "CommandValue": "1,1"}
 
@@ -106,12 +108,18 @@ class Miwi:
         return False
 
     async def turn_off(self, imei: str) -> bool:
+        result = await self.check_onlines([imei])
+        if result[imei] == False or result[imei] is None:
+            return False
         timestamp = datetime.now().isoformat()
         payload = {"Imei": imei, "timestamp": timestamp, "CommandCode": "9203", "CommandValue": "0,0"}
         return await self.send_command(payload)
 
     async def locate(self, imei: str) -> bool:
         try:
+            result = await self.check_onlines([imei])
+            if result[imei] == False or result[imei] is None:
+                return False
             response = await self.send_command({"Imei": imei, "CommandCode": "0039", "CommandValue": ""})
         except Warning:
             return False
@@ -120,6 +128,9 @@ class Miwi:
 
     async def set_fall_alert(self, imei: str, project) -> bool:
         try:
+            result = await self.check_onlines([imei])
+            if result[imei] == False or result[imei] is None:
+                return False
             setting = Settings(self.dbo).get_by_project(project)
             if not setting or not setting.get("sensitivity"):
                 level = 8
@@ -199,6 +210,9 @@ class Miwi:
     async def set_block_phone(self, imei: str) -> bool:
         timestamp = datetime.now().isoformat()
         try:
+            result = await self.check_onlines([imei])
+            if result[imei] == False or result[imei] is None:
+                return False
             response = await self.send_command(
                 {"Imei": imei, "timestamp": timestamp, "CommandCode": "9601", "CommandValue": "1"}
             )
@@ -263,6 +277,9 @@ class Miwi:
 
     async def set_health(self, imei: str) -> bool:
         timestamp = datetime.now().isoformat()
+        result = await self.check_onlines([imei])
+        if result[imei] == False or result[imei] is None:
+            return False
         
         await self.set_bodytemp(imei)
         await self.set_gpstrack(imei)
@@ -315,6 +332,9 @@ class Miwi:
     async def off_fall_alert(self, imei: str) -> bool:
         timestamp = datetime.now().isoformat()
         try:
+            result = await self.check_onlines([imei])
+            if result[imei] == False or result[imei] is None:
+                return False
             response = await self.turn_off(imei)
             if response:
                 update_data = {"imei": imei, "updated": timestamp}
@@ -326,6 +346,9 @@ class Miwi:
 
     async def set_sos(self, imei: str) -> bool:
         timestamp = datetime.now().isoformat()
+        result = await self.check_onlines([imei])
+        if result[imei] == False or result[imei] is None:
+            return False
         device = Devices(self.dbo).get_device_by_imei(imei)
         if not device:
             raise ValueError("Device not found")
@@ -376,8 +399,12 @@ class Miwi:
         return response["Code"] == 0
 
     async def power_off(self, imei: str) -> bool:
+        
         timestamp = datetime.now().isoformat()
         try:
+            result = await self.check_onlines([imei])
+            if result[imei] == False or result[imei] is None:
+                return False
             payload = {"Imei": imei, "timestamp": timestamp, "CommandCode": "0048", "CommandValue": ""}
             response = await self.send_command(payload)
         except Warning:
