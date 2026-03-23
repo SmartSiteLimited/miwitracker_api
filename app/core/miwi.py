@@ -1,3 +1,4 @@
+import profile
 import hashlib
 import json
 from datetime import datetime, timedelta
@@ -241,16 +242,24 @@ class Miwi:
         except Warning:
             return False
 
-    async def set_gpstrack(self, imei: str):
-        timestamp = datetime.now().isoformat()
-
+    async def set_gpstrack(self, imei: str , project=""):
+        timestamp = datetime.now().isoformat()  
+        if project: 
+            setting = Settings(self.dbo).get_by_project(project)
+            print(f"set_gpstrack setting: {setting}" )
+            if setting and setting.get("gps_tracking_interval"):
+                interval = setting.get("gps_tracking_interval")
+            else:
+                interval = '10'
+            print(f"set_gpstrack interval: {interval}" )
         payload = {
             "Imei": imei,
             "Time": timestamp,
             "CommandCode": "0305",
-            "CommandValue": '10'
+            "CommandValue": str(interval)
         }        
         try :
+            
             response = await self.send_command(payload)
             if response:
                 update_data = {"imei": imei, "updated": datetime.now().isoformat()}
@@ -280,9 +289,11 @@ class Miwi:
         result = await self.check_onlines([imei])
         if result[imei] == False or result[imei] is None:
             return False
-        
+        device = Devices(self.dbo).get_device_by_imei(imei)
+        project = device.project if device else ""
+        print(f"set_health project: {project}")
         await self.set_bodytemp(imei)
-        await self.set_gpstrack(imei)
+        await self.set_gpstrack(imei, project)
         await self.set_health_command(imei)
 
         return True

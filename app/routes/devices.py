@@ -18,6 +18,9 @@ async def check_online(dbo: Database = Depends(get_dbo), body: dict[str, Any] = 
 
     miwi = Miwi(dbo)
     result = await miwi.check_onlines(imeis.split(","))
+    print(f"check_online result:", result)
+    
+    
 
     return ResponsePayload(success=True, data=result)
 
