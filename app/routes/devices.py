@@ -49,6 +49,13 @@ async def setblockphone(dbo: Database = Depends(get_dbo), imei=""):
     return ResponsePayload(success=True, data=result)
 
 
+@router.post("/task/setunblockphone/{imei}")
+async def set_unblock_phone(dbo: Database = Depends(get_dbo), imei=""):
+    miwi = Miwi(dbo)
+    result = await miwi.set_block_phone_off(imei)
+    
+    return ResponsePayload(success=True, data=result)
+
 @router.post("/task/setsos/{imei}")
 async def setsos(dbo: Database = Depends(get_dbo), imei=""):
     miwi = Miwi(dbo)

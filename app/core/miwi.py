@@ -187,16 +187,25 @@ class Miwi:
         if not settings:
             raise ValueError(status_code=404, detail="Settings not found")
 
-        sos_phone_numbers = settings.get("sos_phone_number", [])
+        sos_phone_numbers = settings.get("sos_phone_number")
         if not sos_phone_numbers:
             raise ValueError("Phonebook settings not found")
+        
+        if isinstance(sos_phone_numbers, list):
+            phone_passing_list = sos_phone_numbers
+        elif isinstance(sos_phone_numbers, str):
+            phone_passing_list = [sos_phone_numbers]
+        else:
+            phone_passing_list = []
 
         phone_book_settings = []
-        for entry in sos_phone_numbers:
+        
+        
+        for entry in phone_passing_list:
             entry_number_list = entry.split(",")
-            for entry in entry_number_list:
-                new_entry = {"Name": "SOS", "Number": entry}
-                phone_book_settings.append(new_entry)
+            print(f"set_phone_book entry: {entry}")
+            new_entry = {"Name": "SOS", "Number": entry}
+            phone_book_settings.append(new_entry)
         settings_payload = json.dumps(phone_book_settings)
         try:
             response = await self.send_command({"Imei": imei, "CommandCode": "1106", "CommandValue": settings_payload})
@@ -216,6 +225,23 @@ class Miwi:
                 return False
             response = await self.send_command(
                 {"Imei": imei, "timestamp": timestamp, "CommandCode": "9601", "CommandValue": "1"}
+            )
+            if response:
+                update_data = {"imei": imei, "updated": datetime.now().isoformat()}
+                self.dbo.update_object("devices", update_data, "imei")
+        except Warning:
+            return False
+
+        return response["Code"] == 0
+    
+    async def set_block_phone_off(self, imei: str) -> bool:
+        timestamp = datetime.now().isoformat()
+        try:
+            result = await self.check_onlines([imei])
+            if result[imei] == False or result[imei] is None:
+                return False
+            response = await self.send_command(
+                {"Imei": imei, "timestamp": timestamp, "CommandCode": "9601", "CommandValue": "0"}
             )
             if response:
                 update_data = {"imei": imei, "updated": datetime.now().isoformat()}
@@ -328,7 +354,7 @@ class Miwi:
             payload = {
                 "Imei": imei,
                 "timestamp": timestamp,
-                "CommandCode": "9602",
+                "CommandCode": "0009",
                 "CommandValue": call_center_number,
             }
             response = await self.send_command(payload)
