@@ -1,7 +1,8 @@
 from datetime import datetime
 
 import httpx
-
+from typing import Literal , Any
+from pdb import set_trace as st
 from app.config import get_config
 from app.core.db import Database, Query
 from app.schema.device import Device
@@ -11,12 +12,12 @@ class Devices:
     def __init__(self, dbo: Database):
         self.dbo = dbo
 
-    def get_devices(self, project: str, filters: dict[str, any]) -> list[Device]:
+    def get_devices(self, project: str, filters: dict[str, Any]) -> list[Device]:
         query = Query()
         query.Select("*").From("devices")
 
         if filters.get("id"):
-            query.Where("id = " + int(filters["id"]))
+            query.Where("id = " + str(filters["id"]))
         elif filters.get("imei"):
             query.Where("imei = '" + filters["imei"] + "'")
         elif filters.get("imeis"):

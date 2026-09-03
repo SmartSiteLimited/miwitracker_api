@@ -1,4 +1,3 @@
-import profile
 import hashlib
 import json
 from datetime import datetime, timedelta
@@ -96,8 +95,6 @@ class Miwi:
         return results
 
     async def turn_on(self, imei: str, level=8) -> bool:
-        
-        
         timestamp = datetime.now().isoformat()
         payload = {"Imei": imei, "timestamp": timestamp, "CommandCode": "9203", "CommandValue": "1,1"}
 
@@ -190,7 +187,7 @@ class Miwi:
         sos_phone_numbers = settings.get("sos_phone_number")
         if not sos_phone_numbers:
             raise ValueError("Phonebook settings not found")
-        
+
         if isinstance(sos_phone_numbers, list):
             phone_passing_list = sos_phone_numbers
         elif isinstance(sos_phone_numbers, str):
@@ -199,8 +196,7 @@ class Miwi:
             phone_passing_list = []
 
         phone_book_settings = []
-        
-        
+
         for entry in phone_passing_list:
             entry_number_list = entry.split(",")
             print(f"set_phone_book entry: {entry}")
@@ -233,7 +229,7 @@ class Miwi:
             return False
 
         return response["Code"] == 0
-    
+
     async def set_block_phone_off(self, imei: str) -> bool:
         timestamp = datetime.now().isoformat()
         try:
@@ -250,17 +246,12 @@ class Miwi:
             return False
 
         return response["Code"] == 0
-    
+
     async def set_bodytemp(self, imei: str):
         timestamp = datetime.now().isoformat()
 
-        payload = {
-            "Imei": imei,
-            "Time": timestamp,
-            "CommandCode": "9113",
-            "CommandValue": '1,1'
-        }
-        try :
+        payload = {"Imei": imei, "Time": timestamp, "CommandCode": "9113", "CommandValue": "1,1"}
+        try:
             response = await self.send_command(payload)
             if response:
                 update_data = {"imei": imei, "updated": datetime.now().isoformat()}
@@ -268,31 +259,25 @@ class Miwi:
         except Warning:
             return False
 
-    async def set_gpstrack(self, imei: str , project=""):
-        timestamp = datetime.now().isoformat()  
-        if project: 
+    async def set_gpstrack(self, imei: str, project=""):
+        timestamp = datetime.now().isoformat()
+        if project:
             setting = Settings(self.dbo).get_by_project(project)
-            print(f"set_gpstrack setting: {setting}" )
+            print(f"set_gpstrack setting: {setting}")
             if setting and setting.get("gps_tracking_interval"):
                 interval = setting.get("gps_tracking_interval")
             else:
-                interval = '10'
-            print(f"set_gpstrack interval: {interval}" )
-        payload = {
-            "Imei": imei,
-            "Time": timestamp,
-            "CommandCode": "0305",
-            "CommandValue": str(interval)
-        }        
-        try :
-            
+                interval = "10"
+            print(f"set_gpstrack interval: {interval}")
+        payload = {"Imei": imei, "Time": timestamp, "CommandCode": "0305", "CommandValue": str(interval)}
+        try:
             response = await self.send_command(payload)
             if response:
                 update_data = {"imei": imei, "updated": datetime.now().isoformat()}
                 self.dbo.update_object("devices", update_data, "imei")
         except Warning:
             return False
-        
+
     async def set_health_command(self, imei: str) -> bool:
         timestamp = datetime.now().isoformat()
         try:
@@ -308,7 +293,6 @@ class Miwi:
                 self.dbo.update_object("devices", update_data, "imei")
         except Warning:
             return False
-        
 
     async def set_health(self, imei: str) -> bool:
         timestamp = datetime.now().isoformat()
@@ -333,8 +317,7 @@ class Miwi:
         settings = Settings(self.dbo).get_by_project(device.project)
         if not settings or not settings.get("call_center_number"):
             raise ValueError("Settings not found")
-        
-        
+
         call_center_number_list = settings.get("call_center_number")
         # Convert list to comma-separated string if it's a list, otherwise use as-is
         if isinstance(call_center_number_list, list):
@@ -343,13 +326,13 @@ class Miwi:
             call_center_number_list = [call_center_number_list]
         else:
             call_center_number_list = []
-        
-        call_center_number = ",".join(call_center_number_list) 
+
+        call_center_number = ",".join(call_center_number_list)
         print(call_center_number)
-        
+
         if not call_center_number_list:
             raise ValueError("Call center number not found")
-        
+
         try:
             payload = {
                 "Imei": imei,
@@ -394,26 +377,25 @@ class Miwi:
             raise ValueError("Settings not found")
         sos_phone_number_list = settings.get("sos_phone_number")
         # convert to list as ["abc"] or ["abc","def"]
-        
+
         if isinstance(sos_phone_number_list, list):
             sos_phone_number_list = sos_phone_number_list
         elif isinstance(sos_phone_number_list, str):
             sos_phone_number_list = [sos_phone_number_list]
         else:
             sos_phone_number_list = []
-        
-        
+
         sos_join_string = ",".join(sos_phone_number_list)
-        # phone_book_settings = []    
+        # phone_book_settings = []
         # for entry in sos_phone_number_list:
         #     new_entry = {"Name": "SOS", "Number": entry}
         #     phone_book_settings.append(new_entry)
         # settings_payload = json.dumps(phone_book_settings)
-        
-        #get the type for the list 
+
+        # get the type for the list
         print(type(sos_phone_number_list))
         print(sos_phone_number_list)
-        
+
         try:
             payload = {"Imei": imei, "timestamp": timestamp, "CommandCode": "0001", "CommandValue": sos_join_string}
             response = await self.send_command(payload)
@@ -436,7 +418,6 @@ class Miwi:
         return response["Code"] == 0
 
     async def power_off(self, imei: str) -> bool:
-        
         timestamp = datetime.now().isoformat()
         try:
             result = await self.check_onlines([imei])
@@ -488,16 +469,7 @@ class Miwi:
         project_devices = device.get_devices_by_project(project)
         if not project_devices:
             raise ValueError(f"No devices found for project '{project}'.")
-
-        payload = {"UserId": self.user_id}
-
-        filter_device_list = list(filter(lambda x: not x.miwi_group_id or x.miwi_group_id != group_id, project_devices))
-        filter_imeis_list = [d.imei for d in filter_device_list]
-        filter_imeis_string = ",".join(filter_imeis_list)
-        payload.update({"GroupId": group_id, "Imeis": filter_imeis_string})
-
-        response = await self.request("/api/organgroups/movedevicestoorgangroups", payload, "POST")
-        for imei in filter_imeis_list:
+        for imei in [d.imei for d in project_devices]:
             existing_device = Devices(self.dbo).get_device_by_imei(imei)
             if existing_device and existing_device.miwi_group_id != group_id:
                 update_data = {
@@ -507,6 +479,16 @@ class Miwi:
                     "updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 }
                 self.dbo.update_object("devices", update_data, ["imei"], True)
+        payload = {"UserId": self.user_id}
+
+        # update all the deivce into the specified group
+        project_device_string = ",".join([d.imei for d in project_devices])
+        # filter_device_list = list(filter(lambda x: not x.miwi_group_id or x.miwi_group_id != group_id, project_devices))
+        # filter_imeis_list = [d.imei for d in filter_device_list]
+        # filter_imeis_string = ",".join(filter_imeis_list)
+        payload.update({"GroupId": group_id, "Imeis": project_device_string})
+
+        response = await self.request("/api/organgroups/movedevicestoorgangroups", payload, "POST")
 
         return True
 
